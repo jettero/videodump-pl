@@ -63,9 +63,8 @@ for a few things to be fixed (i.e. mpg encoding) or it is me trying to make
 things work...and they don't, but at least you can see what I've tried.
 
 I am not a programmer, let alone a perl programmer.  I've never written perl,
-so please be nice when you read this code.  I had some help from a friend (the
-spotted kangaroo) and also did a lot of googling.
-
+so please be nice when you read this code.  I had some help from a friend (Paul
+Miller <jettero@cpan.org>) and also did a lot of googling.
 
 In order to play the videos in the gallery, you need to setup the mkv file
 extension and set vlc to play it when mythtv calls for it.
