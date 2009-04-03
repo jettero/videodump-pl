@@ -110,7 +110,7 @@ if (length($channel) > 2) {
 #system('cd','/var/lib/mythvideos/');
 
 #capture native mkv h.264 format
-system('/usr/bin/ffmpeg',"-y","-i",$video_device,"-vcodec","copy","-acodec","ac3","-ab","256k","-vb","10000k","-f","matroska","-t",$show_length,$output_filename)
+system('/usr/bin/ffmpeg',"-y","-i",$video_device,"-vcodec","copy","-acodec","copy","-f","matroska","-t",$show_length,$output_filename)
     == 0 or die "some problem with ffmpeg. :(";
 
 #until I can figure out how to capture or transcode to mpg, move raw .mkv file to gallery folder
@@ -144,4 +144,3 @@ rename $output_filename, "/var/lib/mythtv/videos/$output_filename" or die "could
 # some database cleanup only if there are files that exist without entries or entries that exist without files
 # unfortuntatly has to be run as sudo, so if script is run as sudo, this will also work
 #system("sudo /usr/share/doc/mythtv-backend/contrib/myth.find_orphans.pl --dodelete --pass","mysql_password");
-
