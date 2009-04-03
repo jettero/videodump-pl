@@ -1,0 +1,97 @@
+
+*****************************
+
+Right off the bat, let me say that this isn't perfect, but it will tide me over
+until full support for the Hauppauge HD PVR 1212 is released in 0.22.
+
+Limitations:
+
+1) The current version only records to the native h.264 format and copies it to
+the default video gallery(/var/lib/mythtv/videos/).  No mysql integration yet,
+but it's basically ready to go.
+
+2) You will probably have to use VLC to play it because mplayer kind of chokes
+and stutters on it.
+
+3) Must schedule the recording manually or with a cron job in /etc/crontab
+(which is what I do).  Yeah, a cron job is a pain, but for my weekly/daily
+shows, all I do is set it once and it's done.
+
+What it does do:
+
+1) Changes channels, records, and moves to the gallery.
+
+2) Lots of command line switches and code ready for importing into mythtv mysql
+database.
+
+
+What I need help with.
+
+1) I use ffmpeg to capture the video.  If I try to capture (transcode on the
+fly or afterwards) as mpg it freezes the ffmpeg capture process at around 5
+second, but I'm probably just doing something wrong.
+
+2) running ffmpeg (without the need for sudo) so that the files are owned by
+mythtv:mythtv.  This way, when I can import into the mythtv mysql database,
+mythtv can delete them.
+
+
+Secondary problems:
+
+1) I've noticed that the location of the device (i.e. /dev/video0) sometimes
+changes.  It would be nice to lock it down.  I have other deivces and they
+sometimes switch places.
+
+2) The IR blaster/transmitter also stops working after every reboot.  I have to
+go into the MythBuntu Control Center, change the device to anything else and
+then back...strange.
+
+Assumptions:
+
+1) You either have your IR Blaster working or don't care about changing the
+channel.
+
+2) The device driver for the HD PVR is installed and working.  See...
+http://www.mythtv.org/wiki/Hauppauge_HD-PVR It assumes you are running
+SVN/Trunk, so ignore the bottom.  Why don't I use svn or trunk?  Cuz I tried
+and it screwed up everything so bad I had to reformat and reinstall
+mythbuntu....I'm not nerdy enough...I admit it.
+
+
+You'll notice lots of commented out code.  That is either sitting there waiting
+for a few things to be fixed (i.e. mpg encoding) or it is me trying to make
+things work...and they don't, but at least you can see what I've tried.
+
+I am not a programmer, let alone a perl programmer.  I've never written perl,
+so please be nice when you read this code.  I had some help from a friend (the
+spotted kangaroo) and also did a lot of googling.
+
+
+In order to play the videos in the gallery, you need to setup the mkv file
+extension and set vlc to play it when mythtv calls for it.
+
+Utilities/Setup-->Setup-->Media Settings-->Videos Settings-->File Types
+
+Make a new file type "mkv" without the quotes.  Enter this as the command:
+
+    vlc --fullscreen --play-and-exit
+
+Then, make sure the two circles (use default player and ignore) both have X's,
+not checks.
+
+Lastly, make sure that the video browser is set to actively scan each time you
+visit.  This is important or you won't see your new videos unless you jump
+through some hoops.  This is where you set that option:
+Utilities/Setup-->Setup-->Media Settings-->Videos Settings-->General Settings
+There are 3 things that need to be enabled, labeled "Video Browser Browses
+Files" & "Video Gallery Browses Files" & "Video List Browses Files"
+
+It may seem like a lot of work, but it may tide you over until MythTV has full
+support for this device.
+
+Here is an example of a crontab entry for a daily show.  To be recorded on
+channel 183 for 60 minutes at 8pm (20:00) on every Thursday.
+
+    00 20 * * 4  davd   /home/david/temp/videodump.pl -c 183 -t 60 -n TestShow
+
+*****************************
