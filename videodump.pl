@@ -130,7 +130,7 @@ system('/usr/bin/ffmpeg',
     "-i"      => $video_device,  # the input device
     "-vcodec" => "copy",         # copy the video codec without transcoding
     "-acodec" => "copy",         # ... the audio codec
-    "-t"      => $show_length,   # record for this many seconds
+    "-t"      => $show_length,   # -t record for this many seconds ... $o{t} is multiplied by 60 and is in minutes
 
 $output_filename) == 0 or die "some problem with ffmpeg. :(";
 
