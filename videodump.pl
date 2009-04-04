@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 
 # videodump for Hauppauge HD PVR 1212
-# edited as of April 2, 2009 by David
 
 use strict;
 use Fcntl qw(:flock);
