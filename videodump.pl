@@ -45,13 +45,15 @@ my $bs             = $o{b}*1024 || 8192;
 my $video_device   = $o{v} || '/dev/video0';
 my $file_ext       = $o{x} || "mp4";
 my $mysql_password = $o{p} || ""; # xfPbTC5xgx
-my $output_path    = $o{o} || "/recordings/Default/"; #for later importation into mythtv mysql
+my $output_path    = $o{o} || '/var/lib/mythtv/videos/';
 my $channel        = $o{c} || "";
 my $remote         = $o{r} || "dish";
 
+my $output_filename = "$name.$file_ext";
+
 # NOTE make relative paths absolute before we daemonize (if applicable)
-my $output_filename = File::Spec->rel2abs("$name.$file_ext");
-   $output_path     = File::Spec->rel2abs($output_path);
+#my $output_filename = File::Spec->rel2abs("$name.$file_ext");
+#   $output_path     = File::Spec->rel2abs($output_path);
    $video_device    = File::Spec->rel2abs($video_device);
 
 if( $o{d} ) {
