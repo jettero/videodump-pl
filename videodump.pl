@@ -8,7 +8,6 @@ use Fcntl qw(:flock);
 use Getopt::Std;
 use HTTP::Date;
 use POSIX qw(setsid);
-use Cwd;
 use File::Spec;
 
 our $VERSION = "1.0";
