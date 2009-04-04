@@ -66,9 +66,9 @@ my $start_time         = "$date $hour:$min:$sec";
 
 
 #lock the source and make sure it isn't currently being used
-open my $video_source, "<", $video_device or die "error opening source video device($video_device): $!";
+open my $video_source, "<", $video_device or die "error opening source video device \"$video_device\": $!";
 flock $video_source, (LOCK_EX|LOCK_NB) or die "couldn't lock source video device: $!";
-open my $output, ">", $output_filename or die "error opening source video device($output_filename): $!";
+open my $output, ">", $output_filename or die "error opening output file \"$output_filename\": $!";
 
 # now lets change the channel
 sub change_channel {
