@@ -10,7 +10,7 @@ use HTTP::Date;
 use POSIX qw(setsid);
 use File::Spec;
 
-our $VERSION = "1.0";
+our $VERSION = "1.1";
 
 my %o;
 
