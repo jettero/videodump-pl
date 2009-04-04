@@ -50,7 +50,7 @@ my $channel        = $o{c} || "";
 my $remote         = $o{r} || "dish";
 
 # NOTE make relative paths absolute before we daemonize (if applicable)
-my $output_filename = File::Spec->rel2abs("$o{n}.$file_ext");
+my $output_filename = File::Spec->rel2abs("$name.$file_ext");
    $output_path     = File::Spec->rel2abs($output_path);
    $video_device    = File::Spec->rel2abs($video_device);
 
