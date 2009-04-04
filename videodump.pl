@@ -130,7 +130,6 @@ system('/usr/bin/ffmpeg',
     "-i"      => $video_device,  # the input device
     "-vcodec" => "copy",         # copy the video codec without transcoding
     "-acodec" => "copy",         # ... the audio codec
-    "-f"      => "matroska",     # change the container format to matroska
     "-t"      => $show_length,   # record for this many seconds
 
 $output_filename) == 0 or die "some problem with ffmpeg. :(";
