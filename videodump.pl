@@ -7,17 +7,19 @@ use strict;
 use Fcntl qw(:flock);
 use Getopt::Std;
 use HTTP::Date;
+use POSIX qw(setsid);
 
 our $VERSION = "1.0";
 
 my %o;
 
-getopts("h:t:b:n:s:x:p:o:c:r:", \%o) or HELP_MESSAGE(); HELP_MESSAGE() if $o{h};
+getopts("dht:b:n:s:x:p:o:c:r:", \%o) or HELP_MESSAGE(); HELP_MESSAGE() if $o{h};
 sub HELP_MESSAGE {
     my $indent = "\n" . (" " x 4);
 
     print "This is videodump.pl $VERSION\n\n";
     print "Options and switches for videodump.pl:\n";
+    print "  -d daemonize (detatch and run in background)\n";
     print "  -t minutes (default 30)\n";
     print "  -b 1024 byte blocks to read at a time (default 8)\n";
     print "  -n name of file, also used as title (default manual_record)\n";
@@ -33,6 +35,14 @@ sub HELP_MESSAGE {
                 "file that contains the name to use here (default dish)\n";
 
     exit 0;
+}
+
+if( $o{d} ) {
+    # daemonize -- copied from http://www.webreference.com/perl/tutorial/9/3.html
+    defined(my $pid = fork) or die "can't fork: $!";
+    exit if $pid;
+    setsid() or die "can't create a new session: $!";
+    chdir '/' or die "can't change directory to /: $!";
 }
 
 my $show_length    = ($o{t} || 30)*60;
