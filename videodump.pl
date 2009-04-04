@@ -49,11 +49,9 @@ my $output_path    = $o{o} || '/var/lib/mythtv/videos/';
 my $channel        = $o{c} || "";
 my $remote         = $o{r} || "dish";
 
-my $output_filename = "$name.$file_ext";
-
 # NOTE make relative paths absolute before we daemonize (if applicable)
-#my $output_filename = File::Spec->rel2abs("$name.$file_ext");
-#   $output_path     = File::Spec->rel2abs($output_path);
+my $output_filename = File::Spec->rel2abs("$name.$file_ext");
+   $output_path     = File::Spec->rel2abs($output_path);
    $video_device    = File::Spec->rel2abs($video_device);
 
 if( $o{d} ) {
