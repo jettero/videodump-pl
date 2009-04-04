@@ -110,8 +110,16 @@ if (length($channel) > 2) {
 #system('cd','/var/lib/mythvideos/');
 
 #capture native mkv h.264 format
-system('/usr/bin/ffmpeg',"-y","-i",$video_device,"-vcodec","copy","-acodec","copy","-f","matroska","-t",$show_length,$output_filename)
-    == 0 or die "some problem with ffmpeg. :(";
+system('/usr/bin/ffmpeg',
+
+    "-y",                        # it's ok to overwrite the output file
+    "-i"      => $video_device,  # the input device
+    "-vcodec" => "copy",         # copy the video codec without transcoding
+    "-acodec" => "copy",         # ... the audio codec
+    "-f"      => "matroska",     # change the container format to matroska
+    "-t"      => $show_length,   # record for this many seconds
+
+$output_filename) == 0 or die "some problem with ffmpeg. :(";
 
 #until I can figure out how to capture or transcode to mpg, move raw .mkv file to gallery folder
 rename $output_filename, "/var/lib/mythtv/videos/$output_filename" or die "couldn't move output file: $!";
