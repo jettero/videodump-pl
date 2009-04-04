@@ -133,19 +133,14 @@ system('/usr/bin/ffmpeg',
 
 $output_filename) == 0 or die "some problem with ffmpeg. :(";
 
-#until I can figure out how to capture or transcode to mpg, move raw .mkv file to gallery folder
-rename $output_filename, "/var/lib/mythtv/videos/$output_filename" or die "couldn't move output file: $!";
-
-
+# until I can figure out how to capture or transcode to mpg, move video file to gallery folder
+# XXX: should use $o{o} ??
+system(mv => $output_filename, "/var/lib/mythtv/videos/") == 0 or die "couldn't move output file";
 
 # lets fix the mpg to be sure it doesn't have any errors
 # this may not be the best way to do it
 # first optimize database, the script is going to need 755 perms or something similar
 #system($^X,"/usr/share/doc/mythtv-backend/contrib/optimize_mythdb.pl");
-
-
-# move it to the default location for normal recorded shows
-#system('mv', "$output_filename", "$output_path$output_filename") == 0 or die "file doesn't exist?";
 
 
 # this script creates the video file as the current user, not the mythtv user, so mythtv frontend can't delete it
