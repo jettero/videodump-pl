@@ -8,6 +8,8 @@ use Fcntl qw(:flock);
 use Getopt::Std;
 use HTTP::Date;
 use POSIX qw(setsid);
+use Cwd;
+use File::Spec;
 
 our $VERSION = "1.0";
 
@@ -37,14 +39,6 @@ sub HELP_MESSAGE {
     exit 0;
 }
 
-if( $o{d} ) {
-    # daemonize -- copied from http://www.webreference.com/perl/tutorial/9/3.html
-    defined(my $pid = fork) or die "can't fork: $!";
-    exit if $pid;
-    setsid() or die "can't create a new session: $!";
-    chdir '/' or die "can't change directory to /: $!";
-}
-
 my $show_length    = ($o{t} || 30)*60;
 my $name           = $o{n} || "manual_record";
 my $subtitle       = $o{s} || "recorded by HD PVR videodump";
@@ -57,7 +51,18 @@ my $output_path    = $o{o} || "/recordings/Default/"; #for later importation int
 my $channel        = $o{c} || "";
 my $remote         = $o{r} || "dish";
 
-my $output_filename = "$o{n}.$file_ext";
+# NOTE make relative paths absolute before we daemonize (if applicable)
+my $output_filename = File::Spec->rel2abs("$o{n}.$file_ext");
+   $output_path     = File::Spec->rel2abs($output_path);
+   $video_device    = File::Spec->rel2abs($video_device);
+
+if( $o{d} ) {
+    # daemonize -- copied from http://www.webreference.com/perl/tutorial/9/3.html
+    defined(my $pid = fork) or die "can't fork: $!";
+    exit if $pid;
+    setsid() or die "can't create a new session: $!";
+    chdir '/' or die "can't change directory to /: $!";
+}
 
 #setup time in correct format "YYYY-MM-DD HH:MM:SS"
 my ($date, $time)      = split(" ", HTTP::Date::time2iso());
