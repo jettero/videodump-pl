@@ -8,6 +8,8 @@ use Getopt::Std;
 use HTTP::Date;
 use POSIX qw(setsid);
 use File::Spec;
+use File::Basename;
+use File::Copy;
 
 our $VERSION = "1.1";
 
@@ -45,7 +47,7 @@ my $bs             = $o{b}*1024 || 8192;
 my $video_device   = $o{v} || '/dev/video0';
 my $file_ext       = $o{x} || "mp4";
 my $mysql_password = $o{p} || ""; # xfPbTC5xgx
-my $output_path    = $o{o} || '/var/lib/mythtv/videos/';
+my $output_path    = $o{o} || '/var/lib/mythtv/videos/'; # until I can figure out how to capture or transcode to mpg, move video file to gallery folder
 my $channel        = $o{c} || "";
 my $remote         = $o{r} || "dish";
 
@@ -131,7 +133,7 @@ if (length($channel) > 2) {
 #system('cd','/var/lib/mythvideos/');
 
 #capture native mkv h.264 format
-system('/usr/bin/ffmpeg',
+my @cmd = ('/usr/bin/ffmpeg',
 
     "-y",                        # it's ok to overwrite the output file
     "-i"      => $video_device,  # the input device
@@ -139,10 +141,26 @@ system('/usr/bin/ffmpeg',
     "-acodec" => "copy",         # ... the audio codec
     "-t"      => $show_length,   # -t record for this many seconds ... $o{t} is multiplied by 60 and is in minutes
 
-$output_filename) == 0 or die "some problem with ffmpeg. :(";
+$output_filename);
+open my $cmdfh, "|-", @cmd or die "error with popen(ffmpeg): $!";
+my $cret = close $cmdfh;
+if( not $cret ) {
+    if( $! ) {
+        warn "IPC ERROR: $!";
 
-# until I can figure out how to capture or transcode to mpg, move video file to gallery folder
-system(mv => $output_filename, $output_path) == 0 or die "couldn't move output file";
+        my $base = basename($output_filename);
+        move($output_filename, "$output_path/$base.ipcerr") or warn "couldn't move file: $!";
+
+    } else {
+        warn "ffmpeg error, see stdout/stderr for further information";
+        my $base = basename($output_filename);
+        move($output_filename, "$output_path/$base.ffmpegerr") or warn "couldn't move file: $!";
+    }
+
+} else {
+    move($output_filename, $output_path) or warn "couldn't move file: $!";
+}
+
 
 # lets fix the mpg to be sure it doesn't have any errors
 # this may not be the best way to do it
