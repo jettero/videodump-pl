@@ -60,6 +60,10 @@ if( $o{d} ) {
     exit if $pid;
     setsid() or die "can't create a new session: $!";
     chdir '/' or die "can't change directory to /: $!";
+
+    close STDOUT; # NOTE: normally a daemonized process will do this...
+    close STDINT; # the reason I added it today was that many of the ffmpeg examples
+                  # use ffmpeg -b -l -a -h < /dev/null & when they background things.
 }
 
 #setup time in correct format "YYYY-MM-DD HH:MM:SS"
