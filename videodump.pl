@@ -143,19 +143,11 @@ my @cmd = ('/usr/bin/ffmpeg',
 
 $output_filename);
 open my $cmdfh, "|-", @cmd or die "error with popen(ffmpeg): $!";
-my $cret = close $cmdfh;
-if( not $cret ) {
-    if( $! ) {
-        warn "IPC ERROR: $!";
+if( !close($cmdfh) and !$! ) {
+    warn "ffmpeg error, see stdout/stderr for further information";
 
-        my $base = basename($output_filename);
-        move($output_filename, "$output_path/$base.ipcerr") or warn "couldn't move file: $!";
-
-    } else {
-        warn "ffmpeg error, see stdout/stderr for further information";
-        my $base = basename($output_filename);
-        move($output_filename, "$output_path/$base.ffmpegerr") or warn "couldn't move file: $!";
-    }
+    my $base = basename($output_filename);
+    move($output_filename, "$output_path/$base.ffmpegerr") or warn "couldn't move file: $!";
 
 } else {
     move($output_filename, $output_path) or warn "couldn't move file: $!";
