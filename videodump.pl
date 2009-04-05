@@ -13,7 +13,7 @@ our $VERSION = "1.1";
 
 my %o;
 
-getopts("dht:b:n:s:x:p:o:c:r:", \%o) or HELP_MESSAGE(); HELP_MESSAGE() if $o{h};
+getopts("dht:v:b:n:s:x:p:o:c:r:", \%o) or HELP_MESSAGE(); HELP_MESSAGE() if $o{h};
 sub HELP_MESSAGE {
     my $indent = "\n" . (" " x 4);
 
@@ -142,8 +142,7 @@ system('/usr/bin/ffmpeg',
 $output_filename) == 0 or die "some problem with ffmpeg. :(";
 
 # until I can figure out how to capture or transcode to mpg, move video file to gallery folder
-# XXX: should use $output_path ??
-system(mv => $output_filename, "/var/lib/mythtv/videos/") == 0 or die "couldn't move output file";
+system(mv => $output_filename, $output_path) == 0 or die "couldn't move output file";
 
 # lets fix the mpg to be sure it doesn't have any errors
 # this may not be the best way to do it
