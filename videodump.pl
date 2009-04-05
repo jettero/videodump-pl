@@ -77,6 +77,10 @@ open my $output, ">", $output_filename or die "error opening output file \"$outp
 sub change_channel {
     my($channel_digit) = @_;
 
+#some set top boxes need to be woken up
+    system ("irsend SEND_ONCE $remote SELECT");
+    sleep 1; # give it a second to wake up before sending the digits
+
     system ("irsend SEND_ONCE $remote $channel_digit");
     sleep 1;
 }
@@ -97,8 +101,8 @@ if (length($channel) > 2) {
 }
 
 # may or may not need to send the ENTER command after the channel numbers are sent
-# remove comment from next line if necessary, may need to try OK instead of ENTER.
-#system ("irsend SEND_ONCE $remote ENTER");
+# remove comment from next line if necessary, may need to try OK or ENTER instead of SELECT.
+#system ("irsend SEND_ONCE $remote SELECT");
 
 
 # video dumping
