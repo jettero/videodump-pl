@@ -134,12 +134,13 @@ system('/usr/bin/ffmpeg',
 $output_filename) == 0 or die "some problem with ffmpeg. :(";
 
 # until I can figure out how to capture or transcode to mpg, move video file to gallery folder
-# XXX: should use $o{o} ??
+# XXX: should use $output_path ??
 system(mv => $output_filename, "/var/lib/mythtv/videos/") == 0 or die "couldn't move output file";
 
 # lets fix the mpg to be sure it doesn't have any errors
 # this may not be the best way to do it
 # first optimize database, the script is going to need 755 perms or something similar
+# NOTE: script won't need 755 if you fork and use $^X
 #system($^X,"/usr/share/doc/mythtv-backend/contrib/optimize_mythdb.pl");
 
 
