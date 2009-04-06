@@ -39,6 +39,8 @@ sub HELP_MESSAGE {
     exit 0;
 }
 
+# blag
+
 my $show_length    = ($o{t} || 30)*60;
 my $name           = $o{n} || "manual_record";
 my $subtitle       = $o{s} || "recorded by HD PVR videodump";
