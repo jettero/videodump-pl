@@ -9,8 +9,9 @@ use HTTP::Date;
 use POSIX qw(setsid);
 use File::Spec;
 use File::Basename;
-use File::Copy;
 use IPC::Open3;
+use File::Copy;
+use Cwd;
 
 our $VERSION = "1.1";
 
@@ -52,10 +53,14 @@ my $output_path    = $o{o} || '/var/lib/mythtv/videos/'; # until I can figure ou
 my $channel        = $o{c} || "";
 my $remote         = $o{r} || "dish";
 
-# NOTE make relative paths absolute before we daemonize (if applicable)
-my $output_filename = File::Spec->rel2abs("$name.$file_ext");
-   $output_path     = File::Spec->rel2abs($output_path);
-   $video_device    = File::Spec->rel2abs($video_device);
+# NOTE: we're being paranoid about input filenames, it's a good habit.
+
+$output_path  = File::Spec->rel2abs($output_path);
+$output_path  = getcwd() unless -d $output_path and -w _;
+$video_device = File::Spec->rel2abs($video_device);
+
+my $output_basename = basename("$name.$file_ext");
+my $output_filename = File::Spec->rel2abs( File::Spec->catfile($output_path, $output_basename) );
 
 if( $o{d} ) {
     # daemonize -- copied from http://www.webreference.com/perl/tutorial/9/3.html
@@ -162,11 +167,7 @@ FFMPEG: {
 
     if( $? ) {
         warn "ffmpeg error, see stdout/stderr logs for further information";
-
-        move($output_filename, "$output_path/$base-err") or warn "couldn't move file: $!";
-
-    } else {
-        move($output_filename, $output_path) or warn "couldn't move file: $!";
+        move($output_filename, "$output_path/$output_basename-err"); # if this fails, it doesn't really matter
     }
 }
 
