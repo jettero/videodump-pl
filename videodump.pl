@@ -61,7 +61,6 @@ if( $o{d} ) {
     defined(my $pid = fork) or die "can't fork: $!";
     exit if $pid;
     setsid() or die "can't create a new session: $!";
-    chdir '/' or die "can't change directory to /: $!";
 
     close STDOUT; # NOTE: normally a daemonized process will do this...
     close STDINT; # the reason I added it today was that many of the ffmpeg examples
