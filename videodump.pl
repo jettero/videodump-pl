@@ -13,7 +13,7 @@ use IPC::Open3;
 use File::Copy;
 use Cwd;
 
-our $VERSION = "1.1";
+our $VERSION = "1.2";
 
 my %o;
 

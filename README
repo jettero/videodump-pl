@@ -1,4 +1,3 @@
-
 *****************************
 
 Right off the bat, let me say that this isn't perfect, but it will tide me over
@@ -27,11 +26,7 @@ database.
 
 What I need help with.
 
-1) I use ffmpeg to capture the video.  If I try to capture (transcode on the
-fly or afterwards) as mpg it freezes the ffmpeg capture process at around 5
-second, but I'm probably just doing something wrong.
-
-2) running ffmpeg (without the need for sudo) so that the files are owned by
+1) running ffmpeg (without the need for sudo) so that the files are owned by
 mythtv:mythtv.  This way, when I can import into the mythtv mysql database,
 mythtv can delete them.
 
