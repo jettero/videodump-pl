@@ -10,6 +10,7 @@ use POSIX qw(setsid);
 use File::Spec;
 use File::Basename;
 use File::Copy;
+use IPC::Open3;
 
 our $VERSION = "1.1";
 
@@ -132,24 +133,41 @@ if (length($channel) > 2) {
 #system('cd','/var/lib/mythvideos/');
 
 #capture native mkv h.264 format
-my @cmd = ('/usr/bin/ffmpeg',
+FFMPEG: {
+    local $SIG{PIPE} = sub { die "execution failure while forking ffmpeg!\n"; };
 
-    "-y",                        # it's ok to overwrite the output file
-    "-i"      => $video_device,  # the input device
-    "-vcodec" => "copy",         # copy the video codec without transcoding
-    "-acodec" => "copy",         # ... the audio codec
-    "-t"      => $show_length,   # -t record for this many seconds ... $o{t} is multiplied by 60 and is in minutes
+    my @cmd = ('/usr/bin/ffmpeg',
 
-$output_filename);
-open my $cmdfh, "|-", @cmd or die "error with popen(ffmpeg): $!";
-if( !close($cmdfh) and !$! ) {
-    warn "ffmpeg error, see stdout/stderr for further information";
+        "-y",                        # it's ok to overwrite the output file
+        "-i"      => $video_device,  # the input device
+        "-vcodec" => "copy",         # copy the video codec without transcoding
+        "-acodec" => "copy",         # ... the audio codec
+        "-t"      => $show_length,   # -t record for this many seconds ... $o{t} is multiplied by 60 and is in minutes
+
+    $output_filename);
 
     my $base = basename($output_filename);
-    move($output_filename, "$output_path/$base.ffmpegerr") or warn "couldn't move file: $!";
+    my ($output_filehandle, $stdout, $stderr);
+    my $pid = open3($output_filehandle, $stdout, $stderr, @cmd);
 
-} else {
-    move($output_filename, $output_path) or warn "couldn't move file: $!";
+    close $output_filehandle; # tell ffmpeg to ignore userinput on stdin
+
+    open my $log, ">", "/tmp/$base.log" or die $!;
+    print $log localtime() . "(0): $_" while <$stdout>; # this is fine for now, but it may cause problems later
+    print $log localtime() . "(1): $_" while <$stderr>; #  specifically, lots of stderr may jam the pipe() before
+                                                        #   we get around to reading it
+
+    waitpid($pid, 0); # ignore the return value... it probably returned.  (may also cause problems later)
+                      # ffmpeg exit status is returned in $?
+
+    if( $? ) {
+        warn "ffmpeg error, see stdout/stderr logs for further information";
+
+        move($output_filename, "$output_path/$base-err") or warn "couldn't move file: $!";
+
+    } else {
+        move($output_filename, $output_path) or warn "couldn't move file: $!";
+    }
 }
 
 
