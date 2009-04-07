@@ -12,7 +12,7 @@ use File::Basename;
 use File::Copy;
 use IPC::Open3;
 
-our $VERSION = "1.1";
+our $VERSION = "1.2";
 
 my %o;
 
