@@ -5,12 +5,14 @@ until full support for the Hauppauge HD PVR 1212 is released in 0.22.
 
 Limitations:
 
-1) The current version only records to the native h.264 format and copies it to
+1) The current version only records to the native AVS format and copies it to
 the default video gallery(/var/lib/mythtv/videos/).  No mysql integration yet,
 but it's basically ready to go.
 
-2) You will probably have to use VLC to play it because mplayer kind of chokes
-and stutters on it.
+2) You will probably have play around with the video players to see which one
+plays the files best for you.  Depending on what extra options you set, your
+player may choke on it  Try all the different players:
+(INTERNAL vs VLC vs MPLAYER vs XINE vs ???).
 
 3) Must schedule the recording manually or with a cron job in /etc/crontab
 (which is what I do).  Yeah, a cron job is a pain, but for my weekly/daily
@@ -18,7 +20,7 @@ shows, all I do is set it once and it's done.
 
 What it does do:
 
-1) Changes channels, records, and moves to the gallery.
+1) Changes channels, records, and moves to the gallery (or wherever you want).
 
 2) Lots of command line switches and code ready for importing into mythtv mysql
 database.
@@ -28,7 +30,7 @@ What I need help with.
 
 1) running ffmpeg (without the need for sudo) so that the files are owned by
 mythtv:mythtv.  This way, when I can import into the mythtv mysql database,
-mythtv can delete them.
+mythtv can then delete them.
 
 
 Secondary problems:
@@ -40,6 +42,7 @@ sometimes switch places.
 2) The IR blaster/transmitter also stops working after every reboot.  I have to
 go into the MythBuntu Control Center, change the device to anything else and
 then back...strange.
+
 
 Assumptions:
 
@@ -54,21 +57,27 @@ mythbuntu....I'm not nerdy enough...I admit it.
 
 
 You'll notice lots of commented out code.  That is either sitting there waiting
-for a few things to be fixed (i.e. mpg encoding) or it is me trying to make
-things work...and they don't, but at least you can see what I've tried.
+for a few things to be fixed (i.e. native mpg encoding) or it is me trying to
+test things, but at least you can see what I'm trying.
 
 I am not a programmer, let alone a perl programmer.  I've never written perl,
 so please be nice when you read this code.  I had some help from a friend (Paul
 Miller <jettero@cpan.org>) and also did a lot of googling.
 
-In order to play the videos in the gallery, you need to setup the mkv file
-extension and set vlc to play it when mythtv calls for it.
+In order to play the videos in the gallery, you may need to setup the file
+extension and set your favorite player to play it when mythtv calls for it.
 
 Utilities/Setup-->Setup-->Media Settings-->Videos Settings-->File Types
 
-Make a new file type "mkv" without the quotes.  Enter this as the command:
+Make a new file type "ts" (or whatever extension you set) without the quotes.
+Enter this as the command (i.e. for VLC, but you can do whatever):
 
     vlc --fullscreen --play-and-exit
+
+You may also want to try the internal player, depending on the extension, it does
+pretty well also, so you can try this command...
+
+    Internal
 
 Then, make sure the two circles (use default player and ignore) both have X's,
 not checks.
@@ -84,8 +93,10 @@ It may seem like a lot of work, but it may tide you over until MythTV has full
 support for this device.
 
 Here is an example of a crontab entry for a daily show.  To be recorded on
-channel 183 for 60 minutes at 8pm (20:00) on every Thursday.
+channel 183 for 60 minutes at 8pm (20:00) on every Thursday.  The location of
+your "videodump.pl" script may be different.  Replace "user" (in both locations)
+with whatever your normal username/account is.
 
-    00 20 * * 4  davd   /home/david/temp/videodump.pl -c 183 -t 60 -n TestShow
+    00 20 * * 4  user   /home/user/temp/videodump.pl -c 183 -t 60 -n TestShow -d
 
 *****************************

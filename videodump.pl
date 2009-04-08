@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# videodump for Hauppauge HD PVR 1212
+# videodump for Hauppauge HD PVR 1212 by David & Paul
 
 use strict;
 use Fcntl qw(:flock);
@@ -13,7 +13,7 @@ use IPC::Open3;
 use File::Copy;
 use Cwd;
 
-our $VERSION = "1.2";
+our $VERSION = "1.31";
 
 my %o;
 
@@ -30,7 +30,7 @@ sub HELP_MESSAGE {
     print "  -s subtitle description (default recorded by HD PVR)\n";
     print "  -d description detail (default imported by HD PVR)\n";
     print "  -v video device (default /dev/video0)\n";
-    print "  -x file extension (default mkv, will change to mpg when mpg$indent encoding works)\n";
+    print "  -x file extension (default ts, ts gives mpeg-ts container to $indent match mythtv's container, will change to mpg after re-encoding video)\n";
     print "  -p mysql password, default is blank, so you need one! found$indent rontend -> Utilities/Setup->Setup->General\n";
     print "  -o output path where shows are normally stored, needs / at$indent end (default /recordings/Default/)\n";
     print "  -c channel, (default is nothing, just record whatever is on$indent at the time)\n";
@@ -43,17 +43,29 @@ sub HELP_MESSAGE {
 
 # blag
 
-my $show_length    = ($o{t} || 30)*60;
+my $show_length    = ($o{t} || 30)*60-7; # convert time to minutes and subtract 7 seconds so it gives the unit time to recover for next recording
 my $name           = $o{n} || "manual_record";
 my $subtitle       = $o{s} || "recorded by HD PVR videodump";
 my $description    = $o{d} || "imported by HD PVR videodump";
 my $bs             = $o{b}*1024 || 8192;
 my $video_device   = $o{v} || '/dev/video0';
-my $file_ext       = $o{x} || "mp4";
+my $file_ext       = $o{x} || "ts";
 my $mysql_password = $o{p} || ""; # xfPbTC5xgx
-my $output_path    = $o{o} || '/var/lib/mythtv/videos/'; # until I can figure out how to capture or transcode to mpg, move video file to gallery folder
+my $output_path    = $o{o} || '/var/lib/mythtv/videos/'; # until I can figure out how to correctly capture or transcode to mpg, move video file to gallery folder
 my $channel        = $o{c} || "";
 my $remote         = $o{r} || "dish";
+
+
+if ($show_length <= 0 ) {
+    die "Come on, you need to record for longer than that!: $!"; # time must be greater than 7 seconds
+}
+
+
+#setup time in correct format "YYYY-MM-DD HH:MM:SS"
+my ($date, $time)      = split(" ", HTTP::Date::time2iso());
+my ($hour, $min, $sec) = split(":", $time);
+my $start_time         = "$date $hour:$min:$sec";
+
 
 # NOTE: we're being paranoid about input filenames, it's a good habit.
 
@@ -61,7 +73,7 @@ $output_path  = File::Spec->rel2abs($output_path);
 $output_path  = getcwd() unless -d $output_path and -w _;
 $video_device = File::Spec->rel2abs($video_device);
 
-my $output_basename = basename("$name.$file_ext");
+my $output_basename = basename("$name $start_time $channel.$file_ext"); # guarantee a unique file name
 my $output_filename = File::Spec->rel2abs( File::Spec->catfile($output_path, $output_basename) );
 
 if( $o{d} ) {
@@ -75,10 +87,6 @@ if( $o{d} ) {
                   # use ffmpeg -b -l -a -h < /dev/null & when they background things.
 }
 
-#setup time in correct format "YYYY-MM-DD HH:MM:SS"
-my ($date, $time)      = split(" ", HTTP::Date::time2iso());
-my ($hour, $min, $sec) = split(":", $time);
-my $start_time         = "$date $hour:$min:$sec";
 
 
 #lock the source and make sure it isn't currently being used
@@ -87,15 +95,15 @@ flock $video_source, (LOCK_EX|LOCK_NB) or die "couldn't lock source video device
 open my $output, ">", $output_filename or die "error opening output file \"$output_filename\": $!";
 
 # now lets change the channel
+    system ("irsend SEND_ONCE $remote SELECT"); # needs to be outside of sub change_channel
+    sleep 1; # give it a second to wake up before sending the digits
+
 sub change_channel {
     my($channel_digit) = @_;
 
 #some set top boxes need to be woken up
-    system ("irsend SEND_ONCE $remote SELECT");
-    sleep 1; # give it a second to wake up before sending the digits
-
     system ("irsend SEND_ONCE $remote $channel_digit");
-    sleep 1;
+    sleep .2; # channel change speed, 1 sec is too long, some boxes may timeout
 }
 
 sleep 1;
@@ -139,7 +147,7 @@ if (length($channel) > 2) {
 
 #system('cd','/var/lib/mythvideos/');
 
-#capture native mkv h.264 format
+#capture native AVS format
 FFMPEG: {
     local $SIG{PIPE} = sub { die "execution failure while forking ffmpeg!\n"; };
 
@@ -147,8 +155,9 @@ FFMPEG: {
 
         "-y",                        # it's ok to overwrite the output file
         "-i"      => $video_device,  # the input device
-        "-vcodec" => "copy",         # copy the video codec without transcoding
-        "-acodec" => "copy",         # ... the audio codec
+        "-vcodec" => "copy",         # copy the video codec without transcoding, probably asking to much to call a specific encoder for real time capture
+        "-acodec" => "ac3",          # ... the audio codec, let's try to encode to AC-3 as we capture...rather than just "copy", one setp closer to mythtv compatibility
+        "-ab"     => "256k",         # let's also set a reasonable bitrate rather than the default 64k....while we're at it
         "-t"      => $show_length,   # -t record for this many seconds ... $o{t} is multiplied by 60 and is in minutes
 
     $output_filename);
