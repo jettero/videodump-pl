@@ -12,6 +12,7 @@ use File::Basename;
 use IPC::Open3;
 use File::Copy;
 use Cwd;
+use Time::HiRes qw(sleep);
 
 our $VERSION = "1.31";
 
