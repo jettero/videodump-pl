@@ -104,7 +104,7 @@ sub change_channel {
 
 #some set top boxes need to be woken up
     system ("irsend SEND_ONCE $remote $channel_digit");
-    sleep .2; # channel change speed, 1 sec is too long, some boxes may timeout
+    sleep 0.2; # channel change speed, 1 sec is too long, some boxes may timeout
 }
 
 sleep 1;
