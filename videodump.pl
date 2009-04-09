@@ -14,7 +14,7 @@ use File::Copy;
 use Cwd;
 use Time::HiRes qw(sleep);
 
-our $VERSION = "1.32";
+our $VERSION = "1.33";
 
 my %o;
 
@@ -74,7 +74,7 @@ $output_path  = File::Spec->rel2abs($output_path);
 $output_path  = getcwd() unless -d $output_path and -w _;
 $video_device = File::Spec->rel2abs($video_device);
 
-my $output_basename = basename("$name $hour-$min $channel.$file_ext"); # filename includes time and channel
+my $output_basename = basename("$name $date $hour-$min $channel.$file_ext"); # filename includes date, time and channel
 my $output_filename = File::Spec->rel2abs( File::Spec->catfile($output_path, $output_basename) );
 
 if( $o{d} ) {
