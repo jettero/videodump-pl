@@ -13,7 +13,7 @@ use File::Copy;
 use Cwd;
 use Time::HiRes qw(sleep);
 
-our $VERSION = "1.33";
+our $VERSION = "1.34";
 
 my %o;
 
@@ -69,9 +69,9 @@ $output_path  = File::Spec->rel2abs($output_path);
 $output_path  = getcwd() unless -d $output_path and -w _;
 $video_device = File::Spec->rel2abs($video_device);
 
-my $start_time = strftime('%y-%m-%d %H.%M.%S', localtime);
+my $start_time = strftime('%y-%m-%d %H:%M:%S', localtime); # need colons for future import into mythtv database, not file name.
 
-my $output_basename = basename("$name $start_time $channel.$file_ext"); # filename includes date, time and channel
+my $output_basename = basename("$name $start_time $channel.$file_ext"); # filename includes date, time and channel, colons can cause issues ouside of linux
 my $output_filename = File::Spec->rel2abs( File::Spec->catfile($output_path, $output_basename) );
 
 if( $o{d} ) {
@@ -198,8 +198,8 @@ FFMPEG: {
 
 
 # this script creates the video file as the current user, not the mythtv user, so mythtv frontend can't delete it
-# if this script is run as sudo, it can change the owner
-#system("sudo","chown","mythtv:mythtv","$output_path$output_filename"); # should be done with perl's chown()
+# idealy, this should be done as the file is being created, but if I need to transcode with ffmpeg, it's going to change again, but this is a start
+system("chown",":mythtv","$output_filename"); # I'm only able to change the group, but that is not good enough, I also need to change the user to mythtv
 
 
 # now that we know where it is, we can fix any errors in file that was just created
@@ -212,4 +212,4 @@ FFMPEG: {
 
 # some database cleanup only if there are files that exist without entries or entries that exist without files
 # unfortuntatly has to be run as sudo, so if script is run as sudo, this will also work
-#system("sudo /usr/share/doc/mythtv-backend/contrib/myth.find_orphans.pl --dodelete --pass","mysql_password");
+#system("sudo /usr/share/doc/mythtv-backend/contrib/myth.find_orphans.pl --dodbdelete --pass","mysql_password");
