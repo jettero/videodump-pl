@@ -5,8 +5,7 @@
 use strict;
 use Fcntl qw(:flock);
 use Getopt::Std;
-use HTTP::Date;
-use POSIX qw(setsid);
+use POSIX qw(setsid strftime);
 use File::Spec;
 use File::Basename;
 use IPC::Open3;
@@ -64,19 +63,15 @@ if ($show_length <= 0 ) {
 }
 
 
-#setup time in correct format "YYYY-MM-DD HH:MM:SS"
-my ($date, $time)      = split(" ", HTTP::Date::time2iso());
-my ($hour, $min, $sec) = split(":", $time);
-my $start_time         = "$date $hour:$min:$sec";
-
-
 # NOTE: we're being paranoid about input filenames, it's a good habit.
 
 $output_path  = File::Spec->rel2abs($output_path);
 $output_path  = getcwd() unless -d $output_path and -w _;
 $video_device = File::Spec->rel2abs($video_device);
 
-my $output_basename = basename("$name $date $hour-$min $channel.$file_ext"); # filename includes date, time and channel
+my $start_time = strftime('%y-%m-%d %H.%M.%S', localtime);
+
+my $output_basename = basename("$name $start_time $channel.$file_ext"); # filename includes date, time and channel
 my $output_filename = File::Spec->rel2abs( File::Spec->catfile($output_path, $output_basename) );
 
 if( $o{d} ) {
