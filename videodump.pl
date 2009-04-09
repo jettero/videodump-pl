@@ -18,13 +18,14 @@ our $VERSION = "1.31";
 
 my %o;
 
-getopts("dht:v:b:n:s:x:p:o:c:r:", \%o) or HELP_MESSAGE(); HELP_MESSAGE() if $o{h};
+getopts("dht:g:v:b:n:s:x:p:o:c:r:", \%o) or HELP_MESSAGE(); HELP_MESSAGE() if $o{h};
 sub HELP_MESSAGE {
     my $indent = "\n" . (" " x 4);
 
     print "This is videodump.pl $VERSION\n\n";
     print "Options and switches for videodump.pl:\n";
     print "  -d daemonize (detatch and run in background)\n";
+    print "  -g group to chgroup files to after running ffmpeg (default: mythtv\n$indent if it exists, '0' to disable)\n";
     print "  -t minutes (default 30)\n";
     print "  -b 1024 byte blocks to read at a time (default 8)\n";
     print "  -n name of file, also used as title (default manual_record)\n";
@@ -55,6 +56,7 @@ my $mysql_password = $o{p} || ""; # xfPbTC5xgx
 my $output_path    = $o{o} || '/var/lib/mythtv/videos/'; # until I can figure out how to correctly capture or transcode to mpg, move video file to gallery folder
 my $channel        = $o{c} || "";
 my $remote         = $o{r} || "dish";
+my $group          = $o{g} || "mythv";
 
 
 if ($show_length <= 0 ) {
@@ -168,6 +170,15 @@ FFMPEG: {
     my $pid = open3($output_filehandle, $stdout, $stderr, @cmd);
 
     close $output_filehandle; # tell ffmpeg to ignore userinput on stdin
+
+    if( $group ) {
+        if( my $gid = getgrnam($group) ) {
+            chown $<, $gid, $output_filename or warn "couldn't change group of output file: $!";
+
+        } else {
+            warn "couldn't locate group \"$group\"\n";
+        }
+    }
 
     open my $log, ">", "/tmp/$base.log" or die $!;
     print $log localtime() . "(0): $_" while <$stdout>; # this is fine for now, but it may cause problems later
