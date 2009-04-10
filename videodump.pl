@@ -13,34 +13,40 @@ use File::Copy;
 use Cwd;
 use Time::HiRes qw(sleep);
 
-our $VERSION = "1.36";
+our $VERSION = "1.40";
 
 my %o;
 
-getopts("dht:b:c:d:fg:n:o:p:r:s:t:v:x:", \%o) or HELP_MESSAGE(); HELP_MESSAGE() if $o{h};
+getopts("b:c:d:f:g:n:o:p:r:s:t:v:x:", \%o) or HELP_MESSAGE(); HELP_MESSAGE() if $o{h};
 sub HELP_MESSAGE {
     my $indent = "\n" . (" " x 4);
 
     print "This is videodump.pl $VERSION\n\n";
     print "Options and switches for videodump.pl:\n";
     print "  -b 1024 byte blocks to read at a time (default 8)\n";
-    print "  -c channel, (default is nothing, just record whatever is on$indent at the time)\n";
+    print "  -c channel, (default is nothing, just record whatever is on at the time)\n";
     print "  -d description detail (default imported by HD PVR)\n";
     print "  -f fork/daemonize (fork/detatch and run in background)\n";
-    print "  -g group to chgroup files to after running ffmpeg (default: mythtv\n$indent if it exists, '0' to disable)\n";
+    print "  -g group to chgroup files to after running ffmpeg\n",
+          "     (default: mythtv if it exists, '0' to disable)\n";
     print "  -n name of file, also used as title (default manual_record)\n";
-    print "  -o output path where shows are normally stored, needs / at$indent end (default /recordings/Default/)\n";
-    print "  -p mysql password, default is blank, so you need one! found$indent in Frontend -> Utilities/Setup->Setup->General\n";
-    print "  -r remote device to be controled by IR transmitter, change in",
-                "MythTV Control Centre, look at /etc/lircd.conf for the chosen device",
-                "blaster file that contains the name to use here (default dish)\n";
+    print "  -o output path where you want shows to be placed, \n",
+          "     needs / at end (default /var/lib/mythtv/videos/)\n";
+    print "  -p mysql password, default is blank.\n",
+          "     If you supply a password, will attempt to import into MythTV mysql!\n",
+          "     Found in Frontend -> Utilities/Setup->Setup->General\n";
+          "     You need supply -o, which is the path to your MythTV recorded shows folder.";
+    print "  -r remote device to be controled by IR transmitter, change in\n",
+          "     MythTV Control Centre, look at /etc/lircd.conf for the chosen device\n",
+          "     blaster file that contains the name to use here (default dish)\n";
     print "  -s subtitle description (default recorded by HD PVR)\n";
     print "  -t minutes (default 30)\n";
     print "  -v video device (default /dev/video0)\n";
-    print "  -x file extension (default ts, ts gives mpeg-ts container to $indent match mythtv's container, will change to mpg after re-encoding video)\n";
+    print "  -x file extension (default ts, ts gives mpeg-ts container to\n",
+          "     match mythtv's container, will change to mpg after re-encoding video)\n";
 
     exit 0;
-}
+} 
 
 
 my $bs             = $o{b}*1024 || 8192;
@@ -48,7 +54,7 @@ my $channel        = $o{c} || "";
 my $description    = $o{d} || "imported by HD PVR videodump & myth.rebuilddatabase.pl";
 my $group          = $o{g} || "mythtv";
 my $name           = $o{n} || "manual_record";
-my $output_path    = $o{o} || '/var/lib/mythtv/videos/'; # until I can figure out how to correctly capture or transcode to mpg, move video file to gallery folder
+my $output_path    = $o{o} || '/var/lib/mythtv/videos/'; # this should be your default gallery folder, you may want to change this to your MythTV recorded shows folder if you use -p
 my $mysql_password = $o{p} || ""; # xfPbTC5xgx
 my $remote         = $o{r} || "dish";
 my $subtitle       = $o{s} || "recorded by HD PVR videodump";
@@ -71,7 +77,7 @@ $video_device = File::Spec->rel2abs($video_device);
 
 my $start_time = strftime('%y-%m-%d %H:%M:%S', localtime); # need colons for future import into mythtv database, not file name.
 my $start_time_name = $start_time; # just like start_time, but ...
-   $start_time_name =~ s/:/./g; # don't use colons in file names for compatibility with other networked systems, reporting seconds is not useful
+   $start_time_name =~ s/:/./g; # don't use colons in file names for compatibility with other networked systems, reporting seconds is also not useful
 
 my $output_basename = basename("$name $start_time_name $channel.$file_ext"); # filename includes date, time and channel, colons can cause issues ouside of linux
 my $output_filename = File::Spec->rel2abs( File::Spec->catfile($output_path, $output_basename) );
@@ -147,7 +153,7 @@ if (length($channel) > 2) {
 
 #system('cd','/var/lib/mythvideos/');
 
-#capture native AVS format
+#capture native AVS format h264 AAC
 FFMPEG: {
     local $SIG{PIPE} = sub { die "execution failure while forking ffmpeg!\n"; };
 
@@ -209,7 +215,10 @@ FFMPEG: {
 
 
 # now let's import it into the mythtv database
-#system($^X,"/usr/share/doc/mythtv-backend/contrib/myth.rebuilddatabase.pl","--dbhost","localhost","--pass","$mysql_password","--dir","$output_path","--file","$output_filename","--answer","y","--answer","$channel","--answer","$o{n}","--answer","$subtitle","--answer","$description","--answer","$start_time","--answer","Default","--answer","$show_length","--answer","y");
+if( $o{p} ) {
+    # import into MythTV mysql database so it is listed with all your other recorded shows
+system("/usr/share/doc/mythtv-backend/contrib/myth.rebuilddatabase.pl","--dbhost","localhost","--pass","$mysql_password","--dir","$output_path","--file","$output_basename","--answer","y","--answer","$channel","--answer","$o{n}","--answer","$subtitle","--answer","$description","--answer","$start_time","--answer","Default","--answer",($show_length+7)/60,"--answer","y");
+}
 
 # some database cleanup only if there are files that exist without entries or entries that exist without files
 # unfortuntatly has to be run as sudo, so if script is run as sudo, this will also work
