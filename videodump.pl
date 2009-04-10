@@ -75,9 +75,8 @@ $output_path  = File::Spec->rel2abs($output_path);
 $output_path  = getcwd() unless -d $output_path and -w _;
 $video_device = File::Spec->rel2abs($video_device);
 
-my $start_time = strftime('%y-%m-%d %H:%M:%S', localtime); # need colons for future import into mythtv database, not file name.
-my $start_time_name = $start_time; # just like start_time, but ...
-   $start_time_name =~ s/:/./g; # don't use colons in file names for compatibility with other networked systems, reporting seconds is also not useful
+my $start_time      = strftime('%y-%m-%d %H:%M:%S', localtime); # need colons for future import into mythtv database, not file name.
+my $start_time_name = strftime('%y-%m-%d %l.%M%P', localtime);
 
 my $output_basename = basename("$name $start_time_name $channel.$file_ext"); # filename includes date, time and channel, colons can cause issues ouside of linux
 my $output_filename = File::Spec->rel2abs( File::Spec->catfile($output_path, $output_basename) );
