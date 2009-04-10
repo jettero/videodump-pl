@@ -42,20 +42,19 @@ sub HELP_MESSAGE {
     exit 0;
 }
 
-# blag
 
-my $show_length    = ($o{t} || 30)*60-7; # convert time to minutes and subtract 7 seconds so it gives the unit time to recover for next recording
-my $name           = $o{n} || "manual_record";
-my $subtitle       = $o{s} || "recorded by HD PVR videodump";
-my $description    = $o{d} || "imported by HD PVR videodump";
 my $bs             = $o{b}*1024 || 8192;
+my $channel        = $o{c} || "";
+my $description    = $o{d} || "imported by HD PVR videodump & myth.rebuilddatabase.pl";
+my $group          = $o{g} || "mythtv";
+my $name           = $o{n} || "manual_record";
+my $output_path    = $o{o} || '/var/lib/mythtv/videos/'; # until I can figure out how to correctly capture or transcode to mpg, move video file to gallery folder
+my $mysql_password = $o{p} || ""; # xfPbTC5xgx
+my $remote         = $o{r} || "dish";
+my $subtitle       = $o{s} || "recorded by HD PVR videodump";
+my $show_length    = ($o{t} || 30)*60-7; # convert time to minutes and subtract 7 seconds so it gives the unit time to recover for next recording
 my $video_device   = $o{v} || '/dev/video0';
 my $file_ext       = $o{x} || "ts";
-my $mysql_password = $o{p} || ""; # xfPbTC5xgx
-my $output_path    = $o{o} || '/var/lib/mythtv/videos/'; # until I can figure out how to correctly capture or transcode to mpg, move video file to gallery folder
-my $channel        = $o{c} || "";
-my $remote         = $o{r} || "dish";
-my $group          = $o{g} || "mythv";
 
 
 if ($show_length <= 0 ) {
