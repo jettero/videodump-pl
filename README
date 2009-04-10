@@ -97,6 +97,6 @@ channel 183 for 60 minutes at 8pm (20:00) on every Thursday.  The location of
 your "videodump.pl" script may be different.  Replace "user" (in both locations)
 with whatever your normal username/account is.
 
-    00 20 * * 4  user   /home/user/temp/videodump.pl -c 183 -t 60 -n TestShow -d
+    00 20 * * 4  mythtv   /home/user/temp/videodump.pl -c 183 -t 60 -n TestShow -d
 
 *****************************
