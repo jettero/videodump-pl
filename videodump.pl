@@ -62,6 +62,7 @@ if ($show_length <= 0 ) {
     die "Come on, you need to record for longer than that!: $!"; # time must be greater than 7 seconds
 }
 
+umask 0007 if $group; # umask 0007 leaves group write bit on, good when using group chown() mode
 
 # NOTE: we're being paranoid about input filenames, it's a good habit.
 
