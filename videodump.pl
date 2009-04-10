@@ -17,7 +17,7 @@ our $VERSION = "1.36";
 
 my %o;
 
-getopts("dht:b:c:d:f:g:n:o:p:r:s:t:v:x:", \%o) or HELP_MESSAGE(); HELP_MESSAGE() if $o{h};
+getopts("dht:b:c:d:fg:n:o:p:r:s:t:v:x:", \%o) or HELP_MESSAGE(); HELP_MESSAGE() if $o{h};
 sub HELP_MESSAGE {
     my $indent = "\n" . (" " x 4);
 
