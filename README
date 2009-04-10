@@ -5,33 +5,24 @@ until full support for the Hauppauge HD PVR 1212 is released in 0.22.
 
 Limitations:
 
-1) The current version only records to the native AVS format and copies it to
-the default video gallery(/var/lib/mythtv/videos/).  No mysql integration yet,
-but it's basically ready to go.
+1) The current version only records to the native AVS H.264 & AAC format and 
+copies it to the default video gallery(/var/lib/mythtv/videos/).
 
-2) You will probably have play around with the video players to see which one
-plays the files best for you.  Depending on what extra options you set, your
+2) You may have play around with the video players to see which one plays
+the files best for you.  Depending on what extra options you set, your
 player may choke on it  Try all the different players:
-(INTERNAL vs VLC vs MPLAYER vs XINE vs ???).
+(INTERNAL vs VLC vs MPLAYER vs XINE vs ???).  Internal seems to do just fine.
 
 3) Must schedule the recording manually or with a cron job in /etc/crontab
 (which is what I do).  Yeah, a cron job is a pain, but for my weekly/daily
-shows, all I do is set it once and it's done.
+shows, all I do is set it once and it's done.  No channel guide integration yet.
 
 What it does do:
 
 1) Changes channels, records, and moves to the gallery (or wherever you want).
 
-2) Lots of command line switches and code ready for importing into mythtv mysql
-database.
-
-
-What I need help with.
-
-1) running ffmpeg (without the need for sudo) so that the files are owned by
-mythtv:mythtv.  This way, when I can import into the mythtv mysql database,
-mythtv can then delete them.
-
+2) Imports into MythVideo (gallery) or the mysql database so the recordings 
+from the HDPVR show up where your other normal recordings are listed.
 
 Secondary problems:
 
@@ -64,7 +55,7 @@ I am not a programmer, let alone a perl programmer.  I've never written perl,
 so please be nice when you read this code.  I had some help from a friend (Paul
 Miller <jettero@cpan.org>) and also did a lot of googling.
 
-In order to play the videos in the gallery, you may need to setup the file
+In order to play the videos in the gallery, you may want to setup the file
 extension and set your favorite player to play it when mythtv calls for it.
 
 Utilities/Setup-->Setup-->Media Settings-->Videos Settings-->File Types
@@ -74,8 +65,12 @@ Enter this as the command (i.e. for VLC, but you can do whatever):
 
     vlc --fullscreen --play-and-exit
 
+for mplayer:
+
+    mplayer -fs -zoom -vo xv
+
 You may also want to try the internal player, depending on the extension, it does
-pretty well also, so you can try this command...
+pretty well also, so you can simply try this command...
 
     Internal
 
@@ -94,9 +89,16 @@ support for this device.
 
 Here is an example of a crontab entry for a daily show.  To be recorded on
 channel 183 for 60 minutes at 8pm (20:00) on every Thursday.  The location of
-your "videodump.pl" script may be different.  Replace "user" (in both locations)
-with whatever your normal username/account is.
+your "videodump.pl" script may be different.  Replace "user" with whatever 
+your normal username/account is.  This example will put your recordings in the 
+MythVideo (gallery) area.
 
-    00 20 * * 4  mythtv   /home/user/temp/videodump.pl -c 183 -t 60 -n TestShow -d
+    00 20 * * 4  mythtv   /home/user/temp/videodump.pl -c 183 -t 60 -n TestShow -f
+
+This example will integrate into mysql and the MythTV recordings listing.  Your -o
+path may be different, but it is the path to where your system puts it's normal 
+recordings.  The XXXXXXXX is the password for your mysql.
+
+    00 20 * * 4  mythtv   /home/user/temp/videodump.pl -c 183 -t 60 -n TestShow -o /recordings/Default/ -p XXXXXXXX -f
 
 *****************************
