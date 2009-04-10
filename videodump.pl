@@ -13,7 +13,7 @@ use File::Copy;
 use Cwd;
 use Time::HiRes qw(sleep);
 
-our $VERSION = "1.35";
+our $VERSION = "1.36";
 
 my %o;
 
@@ -70,8 +70,9 @@ $output_path  = getcwd() unless -d $output_path and -w _;
 $video_device = File::Spec->rel2abs($video_device);
 
 my $start_time = strftime('%y-%m-%d %H:%M:%S', localtime); # need colons for future import into mythtv database, not file name.
+my $start_time_name = strftime('%y-%m-%d %H.%M', localtime); # don't use colons in file names for compatibility with other networked systems, reporting seconds is not useful
 
-my $output_basename = basename("$name $start_time $channel.$file_ext"); # filename includes date, time and channel, colons can cause issues ouside of linux
+my $output_basename = basename("$name $start_time_name $channel.$file_ext"); # filename includes date, time and channel, colons can cause issues ouside of linux
 my $output_filename = File::Spec->rel2abs( File::Spec->catfile($output_path, $output_basename) );
 
 if( $o{f} ) {
@@ -154,8 +155,7 @@ FFMPEG: {
         "-y",                        # it's ok to overwrite the output file
         "-i"      => $video_device,  # the input device
         "-vcodec" => "copy",         # copy the video codec without transcoding, probably asking to much to call a specific encoder for real time capture
-        "-acodec" => "ac3",          # ... the audio codec, let's try to encode to AC-3 as we capture...rather than just "copy", one setp closer to mythtv compatibility
-        "-ab"     => "256k",         # let's also set a reasonable bitrate rather than the default 64k....while we're at it
+        "-acodec" => "copy",         # what do you know, AAC is playable by default by the internal myth player
         "-t"      => $show_length,   # -t record for this many seconds ... $o{t} is multiplied by 60 and is in minutes
 
     $output_filename);
@@ -199,7 +199,7 @@ FFMPEG: {
 
 # this script creates the video file as the current user, not the mythtv user, so mythtv frontend can't delete it
 # idealy, this should be done as the file is being created, but if I need to transcode with ffmpeg, it's going to change again, but this is a start
-system("chown",":mythtv","$output_filename"); # I'm only able to change the group, but that is not good enough, I also need to change the user to mythtv
+#system("chown",":mythtv","$output_filename"); # I'm only able to change the group, but that is not good enough, I also need to change the user to mythtv
 
 
 # now that we know where it is, we can fix any errors in file that was just created
