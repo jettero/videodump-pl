@@ -55,7 +55,7 @@ my $mysql_password = $o{p} || ""; # xfPbTC5xgx
 my $output_path    = $o{o} || '/var/lib/mythtv/videos/'; # until I can figure out how to correctly capture or transcode to mpg, move video file to gallery folder
 my $channel        = $o{c} || "";
 my $remote         = $o{r} || "dish";
-my $group          = $o{g} || "mythv";
+my $group          = $o{g} || "mythtv";
 
 
 if ($show_length <= 0 ) {
