@@ -13,31 +13,31 @@ use File::Copy;
 use Cwd;
 use Time::HiRes qw(sleep);
 
-our $VERSION = "1.34";
+our $VERSION = "1.35";
 
 my %o;
 
-getopts("dht:g:v:b:n:s:x:p:o:c:r:", \%o) or HELP_MESSAGE(); HELP_MESSAGE() if $o{h};
+getopts("dht:b:c:d:f:g:n:o:p:r:s:t:v:x:", \%o) or HELP_MESSAGE(); HELP_MESSAGE() if $o{h};
 sub HELP_MESSAGE {
     my $indent = "\n" . (" " x 4);
 
     print "This is videodump.pl $VERSION\n\n";
     print "Options and switches for videodump.pl:\n";
-    print "  -d daemonize (detatch and run in background)\n";
-    print "  -g group to chgroup files to after running ffmpeg (default: mythtv\n$indent if it exists, '0' to disable)\n";
-    print "  -t minutes (default 30)\n";
     print "  -b 1024 byte blocks to read at a time (default 8)\n";
-    print "  -n name of file, also used as title (default manual_record)\n";
-    print "  -s subtitle description (default recorded by HD PVR)\n";
+    print "  -c channel, (default is nothing, just record whatever is on$indent at the time)\n";
     print "  -d description detail (default imported by HD PVR)\n";
+    print "  -f fork/daemonize (fork/detatch and run in background)\n";
+    print "  -g group to chgroup files to after running ffmpeg (default: mythtv\n$indent if it exists, '0' to disable)\n";
+    print "  -n name of file, also used as title (default manual_record)\n";
+    print "  -o output path where shows are normally stored, needs / at$indent end (default /recordings/Default/)\n";
+    print "  -p mysql password, default is blank, so you need one! found$indent in Frontend -> Utilities/Setup->Setup->General\n";
+    print "  -r remote device to be controled by IR transmitter, change in",
+                "MythTV Control Centre, look at /etc/lircd.conf for the chosen device",
+                "blaster file that contains the name to use here (default dish)\n";
+    print "  -s subtitle description (default recorded by HD PVR)\n";
+    print "  -t minutes (default 30)\n";
     print "  -v video device (default /dev/video0)\n";
     print "  -x file extension (default ts, ts gives mpeg-ts container to $indent match mythtv's container, will change to mpg after re-encoding video)\n";
-    print "  -p mysql password, default is blank, so you need one! found$indent rontend -> Utilities/Setup->Setup->General\n";
-    print "  -o output path where shows are normally stored, needs / at$indent end (default /recordings/Default/)\n";
-    print "  -c channel, (default is nothing, just record whatever is on$indent at the time)\n";
-    print "  -r remote device to be controled by IR transmitter, change in$indent ", 
-                "MythTV Control Centre, look /etc/lircd.conf for the chosen device$indent blaster ",
-                "file that contains the name to use here (default dish)\n";
 
     exit 0;
 }
@@ -74,8 +74,8 @@ my $start_time = strftime('%y-%m-%d %H:%M:%S', localtime); # need colons for fut
 my $output_basename = basename("$name $start_time $channel.$file_ext"); # filename includes date, time and channel, colons can cause issues ouside of linux
 my $output_filename = File::Spec->rel2abs( File::Spec->catfile($output_path, $output_basename) );
 
-if( $o{d} ) {
-    # daemonize -- copied from http://www.webreference.com/perl/tutorial/9/3.html
+if( $o{f} ) {
+    # fork/daemonize -- copied from http://www.webreference.com/perl/tutorial/9/3.html
     defined(my $pid = fork) or die "can't fork: $!";
     exit if $pid;
     setsid() or die "can't create a new session: $!";
