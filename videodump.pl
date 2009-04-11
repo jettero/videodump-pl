@@ -13,7 +13,7 @@ use File::Copy;
 use Cwd;
 use Time::HiRes qw(sleep);
 
-our $VERSION = "1.40";
+our $VERSION = "1.41";
 
 my %o;
 
@@ -58,13 +58,14 @@ my $output_path    = $o{o} || '/var/lib/mythtv/videos/'; # this should be your d
 my $mysql_password = $o{p} || ""; # xfPbTC5xgx
 my $remote         = $o{r} || "dish";
 my $subtitle       = $o{s} || "recorded by HD PVR videodump";
-my $show_length    = ($o{t} || 30)*60-7; # convert time to minutes and subtract 7 seconds so it gives the unit time to recover for next recording
+my $recovery_time   = 15; # in seconds, used to subtract from show length to give the unit time to recover for next recording if one immediately follows
+my $show_length    = ($o{t} || 30)*60-$recovery_time; # convert time to minutes and subtract recovery time
 my $video_device   = $o{v} || '/dev/video0';
 my $file_ext       = $o{x} || "ts";
 
 
 if ($show_length <= 0 ) {
-    die "Come on, you need to record for longer than that!: $!"; # time must be greater than 7 seconds
+    die "Come on, you need to record for longer than that!: $!"; # $show_length - $recovery_time must be greater than zero seconds
 }
 
 umask 0007 if $group; # umask 0007 leaves group write bit on, good when using group chown() mode
@@ -145,12 +146,12 @@ if (length($channel) > 2) {
 
 
 
-#another way to capture video, but mpg capture doesn't seem to work, freezes at approx 5 seconds
+#other ways to capture video, but mpg capture doesn't seem to work, freezes at approx 5 seconds
 #system('/usr/bin/ffmpeg',"-y","-t","3","-b","10000k","-f","oss","-f","mpegts","-i",$video_source,$output_filename);
 #system('/usr/bin/ffmpeg',"-y","-i",$video_device,"-acodec","ac3","-ab","256k","-vb","10000k","-f","matroska","-t",$show_length,$output_filename);
 #system(/usr/bin/ffmpeg,"-y","-i",$video_device,"-vcodec","mpeg2video","-b","10000k","-acodec","ac3","-ab","256k","-f","vob","-t",$show_length,$output_filename);
-
-#system('cd','/var/lib/mythvideos/');
+system(echo,$show_length);
+#die;
 
 #capture native AVS format h264 AAC
 FFMPEG: {
@@ -216,7 +217,7 @@ FFMPEG: {
 # now let's import it into the mythtv database
 if( $o{p} ) {
     # import into MythTV mysql database so it is listed with all your other recorded shows
-system("/usr/share/doc/mythtv-backend/contrib/myth.rebuilddatabase.pl","--dbhost","localhost","--pass","$mysql_password","--dir","$output_path","--file","$output_basename","--answer","y","--answer","$channel","--answer","$o{n}","--answer","$subtitle","--answer","$description","--answer","$start_time","--answer","Default","--answer",($show_length+7)/60,"--answer","y");
+system("/usr/share/doc/mythtv-backend/contrib/myth.rebuilddatabase.pl","--dbhost","localhost","--pass","$mysql_password","--dir","$output_path","--file","$output_basename","--answer","y","--answer","$channel","--answer","$o{n}","--answer","$subtitle","--answer","$description","--answer","$start_time","--answer","Default","--answer",($show_length+$recovery_time)/60,"--answer","y");
 }
 
 # some database cleanup only if there are files that exist without entries or entries that exist without files
