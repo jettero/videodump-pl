@@ -23,7 +23,8 @@ sub HELP_MESSAGE {
 
     print "This is videodump.pl $VERSION\n\n";
     print "Options and switches for videodump.pl:\n";
-    print "  -b 1024 byte blocks to read at a time (default 8)\n";
+    print "  -b buffer/recovery time in seconds needed between recordings to reset for next show\n",
+          "     default 1 second per 1 minute of recording time";
     print "  -c channel, (default is nothing, just record whatever is on at the time)\n";
     print "  -d description detail (default imported by HD PVR)\n";
     print "  -f fork/daemonize (fork/detatch and run in background)\n";
@@ -49,7 +50,6 @@ sub HELP_MESSAGE {
 } 
 
 
-my $bs             = $o{b}*1024 || 8192;
 my $channel        = $o{c} || "";
 my $description    = $o{d} || "imported by HD PVR videodump & myth.rebuilddatabase.pl";
 my $group          = $o{g} || "mythtv";
@@ -58,14 +58,14 @@ my $output_path    = $o{o} || '/var/lib/mythtv/videos/'; # this should be your d
 my $mysql_password = $o{p} || ""; # xfPbTC5xgx
 my $remote         = $o{r} || "dish";
 my $subtitle       = $o{s} || "recorded by HD PVR videodump";
-my $recovery_time   = 15; # in seconds, used to subtract from show length to give the unit time to recover for next recording if one immediately follows
-my $show_length    = ($o{t} || 30)*60-$recovery_time; # convert time to minutes and subtract recovery time
+my $show_length    = ($o{t} || 30)*60; # convert time to minutes
+my $buffer_time    = $o{b} || $show_length/60 + 7; # treated as seconds (7 sec + 1 sec/min), to subtract from show length to give unit time to recover for next recording if one immediately follows
 my $video_device   = $o{v} || '/dev/video0';
 my $file_ext       = $o{x} || "ts";
 
 
-if ($show_length <= 0 ) {
-    die "Come on, you need to record for longer than that!: $!"; # $show_length - $recovery_time must be greater than zero seconds
+if ($show_length - $buffer_time <= 0 ) {
+    die "Come on, you need to record for longer than that!: $!"; # $show_length - $buffer_time must be greater than zero seconds
 }
 
 umask 0007 if $group; # umask 0007 leaves group write bit on, good when using group chown() mode
@@ -132,25 +132,9 @@ if (length($channel) > 2) {
 #system ("irsend SEND_ONCE $remote SELECT");
 
 
-# video dumping
-#my $ofh =
-#    select $video_source; $|=1; # killing buffering
-#    select $output; $|=1; # (to make sure we read as fast as possible)
-#    select $ofh;
-
-#my $buf; # (we kinda buffer anyway...)
-#while(read $video_source, $buf, $bs) {
-#    print $output $buf;
-#    last if time > $stop_time;
-#}
-
-
-
-#other ways to capture video, but mpg capture doesn't seem to work, freezes at approx 5 seconds
-#system('/usr/bin/ffmpeg',"-y","-t","3","-b","10000k","-f","oss","-f","mpegts","-i",$video_source,$output_filename);
-#system('/usr/bin/ffmpeg',"-y","-i",$video_device,"-acodec","ac3","-ab","256k","-vb","10000k","-f","matroska","-t",$show_length,$output_filename);
-#system(/usr/bin/ffmpeg,"-y","-i",$video_device,"-vcodec","mpeg2video","-b","10000k","-acodec","ac3","-ab","256k","-f","vob","-t",$show_length,$output_filename);
-system(echo,$show_length);
+#system(echo,$show_length);
+#system(echo,$buffer_time);
+#system(echo,$show_length-$buffer_time);
 #die;
 
 #capture native AVS format h264 AAC
@@ -159,11 +143,11 @@ FFMPEG: {
 
     my @cmd = ('/usr/bin/ffmpeg',
 
-        "-y",                        # it's ok to overwrite the output file
-        "-i"      => $video_device,  # the input device
-        "-vcodec" => "copy",         # copy the video codec without transcoding, probably asking to much to call a specific encoder for real time capture
-        "-acodec" => "copy",         # what do you know, AAC is playable by default by the internal myth player
-        "-t"      => $show_length,   # -t record for this many seconds ... $o{t} is multiplied by 60 and is in minutes
+        "-y",                                     # it's ok to overwrite the output file
+        "-i"      => $video_device,               # the input device
+        "-vcodec" => "copy",                      # copy the video codec without transcoding, probably asking to much to call a specific encoder for real time capture
+        "-acodec" => "copy",                      # what do you know, AAC is playable by default by the internal myth player
+        "-t"      => $show_length-$buffer_time,   # -t record for this many seconds ... $o{t} was multiplied by 60 and is in minutes....minus buffer/recovery time
 
     $output_filename);
 
@@ -204,22 +188,17 @@ FFMPEG: {
 #system($^X,"/usr/share/doc/mythtv-backend/contrib/optimize_mythdb.pl");
 
 
-# this script creates the video file as the current user, not the mythtv user, so mythtv frontend can't delete it
-# idealy, this should be done as the file is being created, but if I need to transcode with ffmpeg, it's going to change again, but this is a start
-#system("chown",":mythtv","$output_filename"); # I'm only able to change the group, but that is not good enough, I also need to change the user to mythtv
-
-
 # now that we know where it is, we can fix any errors in file that was just created
 #system('/usr/bin/mythtranscode',"--mpeg2 --buildindex --allkeys --showprogress --infile","$output_path$output_filename");
-
 
 
 # now let's import it into the mythtv database
 if( $o{p} ) {
     # import into MythTV mysql database so it is listed with all your other recorded shows
-system("/usr/share/doc/mythtv-backend/contrib/myth.rebuilddatabase.pl","--dbhost","localhost","--pass","$mysql_password","--dir","$output_path","--file","$output_basename","--answer","y","--answer","$channel","--answer","$o{n}","--answer","$subtitle","--answer","$description","--answer","$start_time","--answer","Default","--answer",($show_length+$recovery_time)/60,"--answer","y");
+system("/usr/share/doc/mythtv-backend/contrib/myth.rebuilddatabase.pl","--dbhost","localhost","--pass","$mysql_password","--dir","$output_path","--file","$output_basename","--answer","y","--answer","$channel","--answer","$o{n}","--answer","$subtitle","--answer","$description","--answer","$start_time","--answer","Default","--answer",($show_length)/60,"--answer","y");
 }
 
+
 # some database cleanup only if there are files that exist without entries or entries that exist without files
-# unfortuntatly has to be run as sudo, so if script is run as sudo, this will also work
-#system("sudo /usr/share/doc/mythtv-backend/contrib/myth.find_orphans.pl --dodbdelete --pass","mysql_password");
+#system("/usr/share/doc/mythtv-backend/contrib/myth.find_orphans.pl --dodbdelete --pass","mysql_password");
+
