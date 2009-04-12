@@ -166,6 +166,10 @@ FFMPEG: {
         }
     }
 
+    # TODO: there should be a config option for the location of the logs and we
+    # should consider using syslogging features if users are of a mind to use
+    # that sort of stuff.
+
     open my $log, ">", "/tmp/$base.log" or die $!;
     print $log localtime() . "(0): $_" while <$stdout>; # this is fine for now, but it may cause problems later
     print $log localtime() . "(1): $_" while <$stderr>; #  specifically, lots of stderr may jam the pipe() before
@@ -212,3 +216,6 @@ if( $o{p} ) {
 # some database cleanup only if there are files that exist without entries or entries that exist without files
 #system("/usr/share/doc/mythtv-backend/contrib/myth.find_orphans.pl --dodbdelete --pass","mysql_password");
 
+# TODO:  There should be a POD with all the README docs, swtich explainations,
+# etc.  This would make building a manpage fairly trivial.  More on that laterz.
+# We need to decide what goes in the documentation first.
