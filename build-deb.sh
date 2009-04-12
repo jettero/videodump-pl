@@ -22,3 +22,10 @@ cp -va videodump.pl README LICENSE gpl-3.0.txt.gz $odir
 cp -va $odir $bdir
 cp -va debian $bdir
 (cd $bdir; debuild)
+mv tmp/*.deb .
+rm -rf tmp
+
+f=`ls *$VERSION*.deb`
+
+echo dpkg -c $f # check contents
+echo dpkg -i $f # install
