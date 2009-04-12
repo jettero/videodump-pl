@@ -194,8 +194,18 @@ FFMPEG: {
 
 # now let's import it into the mythtv database
 if( $o{p} ) {
+    # XXX: dunno how I feel about running something right out of
+    # /usr/share/doc.  Seems kinda hinky.  Plus, that file is likely to move
+    # around between updates and things.  We should really make sure users
+    # actually have it installed, or otherwise provide a config var for it.
+    # -Paul
+
     # import into MythTV mysql database so it is listed with all your other recorded shows
-system("/usr/share/doc/mythtv-backend/contrib/myth.rebuilddatabase.pl","--dbhost","localhost","--pass","$mysql_password","--dir","$output_path","--file","$output_basename","--answer","y","--answer","$channel","--answer","$o{n}","--answer","$subtitle","--answer","$description","--answer","$start_time","--answer","Default","--answer",($show_length)/60,"--answer","y");
+    system($^X, "/usr/share/doc/mythtv-backend/contrib/myth.rebuilddatabase.pl", 
+        "--dbhost", "localhost", "--pass", $mysql_password, "--dir", $output_path, "--file", $output_basename, 
+        "--answer", "y", "--answer", $channel, "--answer", $o{n}, "--answer", $subtitle, 
+        "--answer", $description, "--answer", $start_time, "--answer", "Default", 
+        "--answer", ($show_length)/60, "--answer", "y");
 }
 
 
