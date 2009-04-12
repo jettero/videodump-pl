@@ -216,6 +216,33 @@ if( $o{p} ) {
 # some database cleanup only if there are files that exist without entries or entries that exist without files
 #system("/usr/share/doc/mythtv-backend/contrib/myth.find_orphans.pl --dodbdelete --pass","mysql_password");
 
-# TODO:  There should be a POD with all the README docs, swtich explainations,
-# etc.  This would make building a manpage fairly trivial.  More on that laterz.
-# We need to decide what goes in the documentation first.
+__END__
+# misc comment
+
+=head1 NAME
+
+Videodump-PL - A simple script for recording from generic video stream devices in MythTV
+
+=head1 SYNOPSIS
+
+Until myth gets support for a certain device under v0.22, at least one of the
+authors of this script were dead in the water.  This script will likely work
+with any hardware (/dev/video*) type device that dumps a video/audio stream.
+
+=head1 COPYRIGHT
+
+Copyright 2009 -- David Stoll and Paul Miller
+
+GPL
+
+=head1 REPORTING BUGS
+
+C<http://groups.google.com/group/videodump-pl>
+
+=head1 REPOSITORY
+
+C<http://github.com/jettero/videodump-pl>
+
+=head1 SEE ALSO
+
+perl(1), ffmpeg(1)
