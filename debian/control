@@ -6,7 +6,7 @@ Build-Depends: debhelper (>= 5), bash, perl-modules, perl-doc
 Standards-Version: 3.7.2
 
 Package: videodump-pl
-Architecture: any
+Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}, ffmpeg, perl, perl-modules
 Description: A simple script for recording from generic video stream devices in MythTV
   Until myth gets support for a certain device under v0.22, at least one of the
