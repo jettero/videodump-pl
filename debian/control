@@ -1,0 +1,14 @@
+Source: videodump-pl
+Section: mythplugins
+Priority: optional
+Maintainer: Paul Miller <jettero@cpan.org>
+Build-Depends: debhelper (>= 5), bash, perl-modules, perl-doc
+Standards-Version: 3.7.2
+
+Package: videodump-pl
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ffmpeg, perl, perl-modules
+Description: A generic method of dumping a /dev/video0 device using ffmpeg
+  Until myth gets support for a certain device under v0.22, at least one of the
+  authors of this script were dead in the water.  This script will likely work
+  with any hardware (/dev/video*) type device that dumps a video/audio stream.
