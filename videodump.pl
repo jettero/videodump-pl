@@ -99,7 +99,10 @@ if( $o{f} ) {
 
 #lock the source and make sure it isn't currently being used
 open my $lockfile_fh, ">", $lockfile or die "error opening lockfile \"$lockfile\": $!";
-flock $lockfile_fh, (LOCK_EX|LOCK_NB) or die "couldn't lock lockfile: $!";
+while( not flock $lockfile_fh, (LOCK_EX|LOCK_NB) ) {
+    warn "couldn't lock lockfile \"$lockfile,\" waiting for a turn...\n";
+    sleep 5;
+}
 open my $output, ">", $output_filename or die "error opening output file \"$output_filename\": $!";
 
 # now lets change the channel
