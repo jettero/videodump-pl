@@ -17,7 +17,7 @@ our $VERSION = "1.41";
 
 my %o;
 
-getopts("fb:c:d:g:n:o:p:r:s:t:v:x:", \%o) or HELP_MESSAGE(); HELP_MESSAGE() if $o{h};
+getopts("fb:c:L:d:g:n:o:p:r:s:t:v:x:", \%o) or HELP_MESSAGE(); HELP_MESSAGE() if $o{h};
 sub HELP_MESSAGE {
     my $indent = "\n" . (" " x 4);
 
@@ -28,6 +28,7 @@ sub HELP_MESSAGE {
     print "  -c channel, (default is nothing, just record whatever is on at the time)\n";
     print "  -d description detail (default imported by HD PVR)\n";
     print "  -f fork/daemonize (fork/detatch and run in background)\n";
+    print "  -L lockfile location (default: /tmp/.vd-pl.lock)\n";
     print "  -g group to chgroup files to after running ffmpeg\n",
           "     (default: mythtv if it exists, '0' to disable)\n";
     print "  -n name of file, also used as title (default manual_record)\n";
@@ -50,6 +51,7 @@ sub HELP_MESSAGE {
 } 
 
 
+my $lockfile       = $o{L} || "/tmp/.vd-pl.lock";
 my $channel        = $o{c} || "";
 my $description    = $o{d} || "imported by HD PVR videodump & myth.rebuilddatabase.pl";
 my $group          = $o{g} || "mythtv";
@@ -96,8 +98,8 @@ if( $o{f} ) {
 
 
 #lock the source and make sure it isn't currently being used
-open my $video_source, "<", $video_device or die "error opening source video device \"$video_device\": $!";
-flock $video_source, (LOCK_EX|LOCK_NB) or die "couldn't lock source video device: $!";
+open my $lockfile_fh, ">", $lockfile or die "error opening lockfile \"$lockfile\": $!";
+flock $lockfile_fh, (LOCK_EX|LOCK_NB) or die "couldn't lock lockfile: $!";
 open my $output, ">", $output_filename or die "error opening output file \"$output_filename\": $!";
 
 # now lets change the channel
@@ -182,6 +184,9 @@ FFMPEG: {
         warn "ffmpeg error, see stdout/stderr logs for further information";
         move($output_filename, "$output_path/$output_basename-err"); # if this fails, it doesn't really matter
     }
+
+    # no # flock $lockfile_fh, LOCK_UN or die $!; # seems like a good idea, but is actually a bad practice, long story
+    close $lockfile_fh; # release the lock for the next process
 }
 
 
