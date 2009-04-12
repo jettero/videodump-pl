@@ -21,4 +21,4 @@ cp -va videodump.pl README LICENSE gpl-3.0.txt.gz $odir
 (cd tmp; tar -zcvvf videodump-pl_$VERSION.orig.tar.gz $tdir)
 cp -va $odir $bdir
 cp -va debian $bdir
-#(cd $bdir; debuild)
+(cd $bdir; debuild)
