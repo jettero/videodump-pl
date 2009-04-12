@@ -32,7 +32,7 @@ build-stamp: configure-stamp
 clean:
 	dh_testdir
 	dh_testroot
-	rm -f build-stamp configure-stamp
+	rm -f build-stamp configure-stamp videodump.3.gz
 	dh_clean 
 
 install: build
