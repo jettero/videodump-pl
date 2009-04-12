@@ -27,6 +27,7 @@ build: build-stamp
 build-stamp: configure-stamp 
 	dh_testdir
 	touch $@
+	pod2man videodump.pl | gzip > videodump.3.gz
 
 clean:
 	dh_testdir
@@ -39,6 +40,10 @@ install: build
 	dh_testroot
 	dh_clean -k 
 	dh_installdirs
+	mkdir -p debian/videodump-pl/usr/bin/
+	mkdir -p debian/videodump-pl/usr/share/man/man3
+	install -o 0 -g 0 -m 755 videodump.pl   debian/videodump-pl/usr/bin/videodump
+	install -o 0 -g 0 -m 644 videodump.3.gz debian/videodump-pl/usr/share/man/man3/
 
 binary-indep: build install
 
