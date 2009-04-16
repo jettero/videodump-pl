@@ -12,44 +12,15 @@ use IPC::Open3;
 use File::Copy;
 use Cwd;
 use Time::HiRes qw(sleep);
+use Pod::Usage;
 
 our $VERSION = "1.41";
 
 my %o;
 
-getopts("fb:c:L:d:g:n:o:p:r:s:t:v:x:", \%o) or HELP_MESSAGE(); HELP_MESSAGE() if $o{h};
-sub HELP_MESSAGE {
-    my $indent = "\n" . (" " x 4);
-
-    print "This is videodump.pl $VERSION\n\n";
-    print "Options and switches for videodump.pl:\n";
-    print "  -b buffer/recovery time in seconds needed between recordings to reset for next show\n",
-          "     default 1 second per 1 minute of recording time";
-    print "  -c channel, (default is nothing, just record whatever is on at the time)\n";
-    print "  -d description detail (default imported by HD PVR)\n";
-    print "  -f fork/daemonize (fork/detatch and run in background)\n";
-    print "  -L lockfile location (default: /tmp/.vd-pl.lock)\n";
-    print "  -g group to chgroup files to after running ffmpeg\n",
-          "     (default: mythtv if it exists, '0' to disable)\n";
-    print "  -n name of file, also used as title (default manual_record)\n";
-    print "  -o output path where you want shows to be placed, \n",
-          "     needs / at end (default /var/lib/mythtv/videos/)\n";
-    print "  -p mysql password, default is blank.\n",
-          "     If you supply a password, will attempt to import into MythTV mysql!\n",
-          "     Found in Frontend -> Utilities/Setup->Setup->General\n";
-          "     You need supply -o, which is the path to your MythTV recorded shows folder.";
-    print "  -r remote device to be controled by IR transmitter, change in\n",
-          "     MythTV Control Centre, look at /etc/lircd.conf for the chosen device\n",
-          "     blaster file that contains the name to use here (default dish)\n";
-    print "  -s subtitle description (default recorded by HD PVR)\n";
-    print "  -t minutes (default 30)\n";
-    print "  -v video device (default /dev/video0)\n";
-    print "  -x file extension (default ts, ts gives mpeg-ts container to\n",
-          "     match mythtv's container, will change to mpg after re-encoding video)\n";
-
-    exit 0;
-} 
-
+getopts("Hhfb:c:L:d:g:n:o:p:r:s:t:v:x:", \%o) or pod2usage();
+pod2usage() if $o{h};
+pod2usage(-verbose=>1) if $o{H};
 
 my $lockfile       = $o{L} || "/tmp/.vd-pl.lock";
 my $channel        = $o{c} || "";
@@ -231,11 +202,102 @@ __END__
 
 Videodump-PL - A simple script for recording from generic video stream devices in MythTV
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
 
 Until myth gets support for a certain device under v0.22, at least one of the
 authors of this script were dead in the water.  This script will likely work
 with any hardware (/dev/video*) type device that dumps a video/audio stream.
+
+=head1 SYNOPSIS
+
+ videodump.pl
+    -h help
+    -H full help
+
+    -b buffer/recovery time
+    -c channel
+    -d show description
+    -f fork/daemonize
+    -L lockfile
+    -g group
+    -n show name
+    -o output path
+    -p mysql password
+    -r remote device
+    -s subtitle description
+    -t minutes (default 30)
+    -v video device (default /dev/video0)
+    -x file extension (default ts)
+
+=head1 OPTIONS
+
+=over
+
+=item B<-b>
+
+buffer/recovery time in seconds needed between recordings to reset for next
+show default 1 second per 1 minute of recording time
+
+=item B<-c>
+
+channel, (default is nothing, just record whatever is on at the time)
+
+=item B<-d>
+
+description detail (default imported by HD PVR)
+
+=item B<-f>
+
+fork/daemonize (fork/detatch and run in background)
+
+=item B<-L>
+
+lockfile location (default: /tmp/.vd-pl.lock)
+
+=item B<-g>
+
+group to chgroup files to after running ffmpeg (default: mythtv if it exists,
+'0' to disable)
+
+=item B<-n>
+
+name of file, also used as title (default manual_record)
+
+=item B<-o>
+
+output path where you want shows to be placed needs / at end (default
+/var/lib/mythtv/videos/)
+
+=item B<-p>
+
+mysql password, default is blank.  If you supply a password, will attempt to
+import into MythTV mysql!  Found in Frontend -> Utilities/Setup->Setup->General
+You need supply -o, which is the path to your MythTV recorded shows folder.";
+
+=item B<-r>
+
+remote device to be controled by IR transmitter, change in MythTV Control
+Centre, look at /etc/lircd.conf for the chosen device blaster file that
+contains the name to use here (default dish)
+
+=item B<-s>
+
+subtitle description (default recorded by HD PVR)
+
+=item B<-t>
+
+minutes (default 30)
+
+=item B<-v>
+
+video device (default /dev/video0)
+
+=item B<-x>
+
+file extension (default ts, ts gives mpeg-ts container to match mythtv's
+container, will change to mpg after re-encoding video)
+
+=back
 
 =head1 COPYRIGHT
 
