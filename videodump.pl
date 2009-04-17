@@ -177,8 +177,13 @@ FFMPEG: {
 # now that we know where it is, we can fix any errors in file that was just created
 #system('/usr/bin/mythtranscode',"--mpeg2 --buildindex --allkeys --showprogress --infile","$output_path$output_filename");
 
-if ($o{m} = 2) {
-system(ffmpeg,"-i",$output_filename,"-acodec","ac3","-ab","192k","-vcodec","mpeg2video","-b","10.0M","-cmp",2,"-subcmp",2,"-mbd",2,"-trellis",1,"$output_path/$name $start_time_name $channel re-encoded.mpg");
+if ($myth_import = 2) {
+system('ffmpeg',
+     "-i" => $output_filename,
+     "-acodec" => "ac3", "-ab" => "192k",
+     "-vcodec" => "mpeg2video", "-b" => "10.0M", "-cmp" => 2, "-subcmp" => 2,
+     "-mbd" => 2, "-trellis" => 1,
+     "$output_path/$name", $start_time_name, $channel, "re-encoded.mpg");
 
 # need command here to delete original file if the above conversion was sucessfull
 
