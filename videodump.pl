@@ -207,7 +207,7 @@ if( $mysql_password ) {
     # /usr/share/doc/mythtv-backend/contrib/myth.rebuilddatabase.pl.gz
 
     # import into MythTV mysql database so it is listed with all your other recorded shows
-    system("myth.rebuilddatabase.pl", 
+    system($^X, "myth.rebuilddatabase.pl",
         "--dbhost", "localhost", "--pass", $mysql_password, "--dir", $output_path, "--file", $output_basename, 
         "--answer", "y", "--answer", $channel, "--answer", $o{n}, "--answer", $subtitle, 
         "--answer", $description, "--answer", $start_time, "--answer", "Default", 
@@ -216,7 +216,7 @@ if( $mysql_password ) {
 
 
 # some database cleanup only if there are files that exist without entries or entries that exist without files
-#system("/usr/share/doc/mythtv-backend/contrib/myth.find_orphans.pl --dodbdelete --pass","mysql_password");
+#system($^X, "/usr/share/doc/mythtv-backend/contrib/myth.find_orphans.pl --dodbdelete --pass","mysql_password");
 
 __END__
 # misc comment
