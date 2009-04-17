@@ -14,11 +14,11 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.41";
+our $VERSION = "1.42";
 
 my %o;
 
-getopts("Hhfb:c:L:d:g:n:o:p:r:s:t:v:x:", \%o) or pod2usage();
+getopts("Hhfb:c:d:g:L:m:n:o:p:r:s:t:v:x:", \%o) or pod2usage();
 pod2usage() if $o{h};
 pod2usage(-verbose=>1) if $o{H};
 
@@ -26,19 +26,28 @@ my $lockfile       = $o{L} || "/tmp/.vd-pl.lock";
 my $channel        = $o{c} || "";
 my $description    = $o{d} || "imported by HD PVR videodump & myth.rebuilddatabase.pl";
 my $group          = $o{g} || "mythtv";
+my $myth_import    = $o{m} || 0; # allows for different levels of importing into mythtv, see help file for details
 my $name           = $o{n} || "manual_record";
 my $output_path    = $o{o} || '/var/lib/mythtv/videos/'; # this should be your default gallery folder, you may want to change this to your MythTV recorded shows folder if you use -p
 my $mysql_password = $o{p} || ""; # xfPbTC5xgx
 my $remote         = $o{r} || "dish";
 my $subtitle       = $o{s} || "recorded by HD PVR videodump";
 my $show_length    = ($o{t} || 30)*60; # convert time to minutes
-my $buffer_time    = $o{b} || $show_length/60 + 7; # treated as seconds (7 sec + 1 sec/min), to subtract from show length to give unit time to recover for next recording if one immediately follows
+my $buffer_time    = $o{b} || 7; # subtract a few seconds from show length to give unit time to recover for next recording if one immediately follows
 my $video_device   = $o{v} || '/dev/video0';
-my $file_ext       = $o{x} || "ts";
+my $file_ext       = $o{x} || "ts"; # good idea to leave it default, internal player plays the default well, if you want to play with some other player, then consider a change
 
 
 if ($show_length - $buffer_time <= 0 ) {
     die "Come on, you need to record for longer than that!: $!"; # $show_length - $buffer_time must be greater than zero seconds
+}
+
+if ($o{p} && ($o{m} == 0)) {
+    die "If you supply a password for mysql, you need to tell me how to import with the -m switch!";
+}
+
+if ((($o{m} == 1) || ($o{m} = 2)) && (! $o{p})) {
+    die "If you want me to import, you need to supply your mysql password!";
 }
 
 umask 0007 if $group; # umask 0007 leaves group write bit on, good when using group chown() mode
@@ -164,27 +173,36 @@ FFMPEG: {
 }
 
 
+
+# now that we know where it is, we can fix any errors in file that was just created
+#system('/usr/bin/mythtranscode',"--mpeg2 --buildindex --allkeys --showprogress --infile","$output_path$output_filename");
+
+if ($o{m} = 2) {
+system(ffmpeg,"-i",$output_filename,"-acodec","ac3","-ab","192k","-vcodec","mpeg2video","-b","10.0M","-cmp",2,"-subcmp",2,"-mbd",2,"-trellis",1,"$output_path/$name $start_time_name $channel re-encoded.mpg");
+
+# need command here to delete original file if the above conversion was sucessfull
+
+my $output_basename = "$name $start_time_name $channel re-encoded.mpg"; # the new target file name
+my $output_filename = "$output_path/$output_basename";# the new target file name and path
+system("echo $output_basename");
+system("echo $output_filename");
+
 # lets fix the mpg to be sure it doesn't have any errors
 # this may not be the best way to do it
 # first optimize database, the script is going to need 755 perms or something similar
 # NOTE: script won't need 755 if you fork and use $^X
 #system($^X,"/usr/share/doc/mythtv-backend/contrib/optimize_mythdb.pl");
-
-
-# now that we know where it is, we can fix any errors in file that was just created
-#system('/usr/bin/mythtranscode',"--mpeg2 --buildindex --allkeys --showprogress --infile","$output_path$output_filename");
+ } 
 
 
 # now let's import it into the mythtv database
 if( $o{p} ) {
-    # XXX: dunno how I feel about running something right out of
-    # /usr/share/doc.  Seems kinda hinky.  Plus, that file is likely to move
-    # around between updates and things.  We should really make sure users
-    # actually have it installed, or otherwise provide a config var for it.
-    # -Paul
+    # XXX: myth.rebuilddatabase.pl must be unziped and installed with correct perms somewhere in the path
+    # mythbuntu distributes it in gz format to this location, however, your distro may be different
+    # /usr/share/doc/mythtv-backend/contrib/myth.rebuilddatabase.pl.gz
 
     # import into MythTV mysql database so it is listed with all your other recorded shows
-    system($^X, "/usr/share/doc/mythtv-backend/contrib/myth.rebuilddatabase.pl", 
+    system("myth.rebuilddatabase.pl", 
         "--dbhost", "localhost", "--pass", $mysql_password, "--dir", $output_path, "--file", $output_basename, 
         "--answer", "y", "--answer", $channel, "--answer", $o{n}, "--answer", $subtitle, 
         "--answer", $description, "--answer", $start_time, "--answer", "Default", 
@@ -218,11 +236,12 @@ with any hardware (/dev/video*) type device that dumps a video/audio stream.
     -c channel
     -d show description
     -f fork/daemonize
-    -L lockfile
     -g group
+    -L lockfile
+    -m mythtv mysql import option (requires -p)
     -n show name
     -o output path
-    -p mysql password
+    -p mysql password (may require -o and/or -m)
     -r remote device
     -s subtitle description
     -t minutes (default 30)
@@ -250,14 +269,26 @@ description detail (default imported by HD PVR)
 
 fork/daemonize (fork/detatch and run in background)
 
-=item B<-L>
-
-lockfile location (default: /tmp/.vd-pl.lock)
-
 =item B<-g>
 
 group to chgroup files to after running ffmpeg (default: mythtv if it exists,
 '0' to disable)
+
+=item B<-L>
+
+lockfile location (default: /tmp/.vd-pl.lock)
+
+=item B<-m>
+
+lockfile location (default: 0), 1 and 2 require -p
+0 = Raw dump to output folder (-o), recording will be available for manual play as soon as recording starts,
+    will NOT show up in mythtv mysql "recorded shows" list, best dumped to default MythVideo Gallery folder.
+1 = Same as 0, but the output folder (-o) must be where mythtv recordings are stored by default,
+    will be imported into mysql imediately after it is done recording in raw format.
+    Requires mysql password (-p) switch.
+2 = Same as 1, but will be converted to mythtv native mpeg2 format with commercial flagging points,
+    will show up in the recorded shows list after mpeg2 conversion (time will vary based on CPU).
+    Requires mysql password (-p) switch.
 
 =item B<-n>
 
@@ -272,7 +303,8 @@ output path where you want shows to be placed needs / at end (default
 
 mysql password, default is blank.  If you supply a password, will attempt to
 import into MythTV mysql!  Found in Frontend -> Utilities/Setup->Setup->General
-You need supply -o, which is the path to your MythTV recorded shows folder.";
+You need supply -o, which needs to be the path to your MythTV recorded shows folder.
+You should use -m (1 or 2).  If -m switch is not used, (-m 1) is assumed.
 
 =item B<-r>
 
