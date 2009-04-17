@@ -26,10 +26,10 @@ my $lockfile       = $o{L} || "/tmp/.vd-pl.lock";
 my $channel        = $o{c} || "";
 my $description    = $o{d} || "imported by HD PVR videodump & myth.rebuilddatabase.pl";
 my $group          = $o{g} || "mythtv";
-my $myth_import    = $o{m} || 0; # allows for different levels of importing into mythtv, see help file for details
+my $myth_import    = $o{m}; # allows for different levels of importing into mythtv, see help file for details
 my $name           = $o{n} || "manual_record";
 my $output_path    = $o{o} || '/var/lib/mythtv/videos/'; # this should be your default gallery folder, you may want to change this to your MythTV recorded shows folder if you use -p
-my $mysql_password = $o{p} || ""; # xfPbTC5xgx
+my $mysql_password = $o{p}; # xfPbTC5xgx
 my $remote         = $o{r} || "dish";
 my $subtitle       = $o{s} || "recorded by HD PVR videodump";
 my $show_length    = ($o{t} || 30)*60; # convert time to minutes
@@ -42,11 +42,11 @@ if ($show_length - $buffer_time <= 0 ) {
     die "Come on, you need to record for longer than that!: $!"; # $show_length - $buffer_time must be greater than zero seconds
 }
 
-if ($o{p} && ($o{m} == 0)) {
+if ($mysql_password and not defined $myth_import) {
     die "If you supply a password for mysql, you need to tell me how to import with the -m switch!";
 }
 
-if ((($o{m} == 1) || ($o{m} = 2)) && (! $o{p})) {
+if (($myth_import == 1 or $myth_import == 2) and not defined $mysql_password) {
     die "If you want me to import, you need to supply your mysql password!";
 }
 
@@ -201,7 +201,7 @@ system("echo $output_filename");
 
 
 # now let's import it into the mythtv database
-if( $o{p} ) {
+if( $mysql_password ) {
     # XXX: myth.rebuilddatabase.pl must be unziped and installed with correct perms somewhere in the path
     # mythbuntu distributes it in gz format to this location, however, your distro may be different
     # /usr/share/doc/mythtv-backend/contrib/myth.rebuilddatabase.pl.gz
