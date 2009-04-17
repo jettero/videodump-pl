@@ -14,7 +14,7 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.42";
+our $VERSION = "1.43";
 
 my %o;
 
@@ -132,6 +132,7 @@ FFMPEG: {
         "-i"      => $video_device,               # the input device
         "-vcodec" => "copy",                      # copy the video codec without transcoding, probably asking to much to call a specific encoder for real time capture
         "-acodec" => "copy",                      # what do you know, AAC is playable by default by the internal myth player
+        "-ab" => "192k",
         "-t"      => $show_length-$buffer_time,   # -t record for this many seconds ... $o{t} was multiplied by 60 and is in minutes....minus buffer/recovery time
 
     $output_filename);
@@ -177,7 +178,7 @@ FFMPEG: {
 # now that we know where it is, we can fix any errors in file that was just created
 #system('/usr/bin/mythtranscode',"--mpeg2 --buildindex --allkeys --showprogress --infile","$output_path$output_filename");
 
-if ($myth_import = 2) {
+if ($myth_import == 2) {
     my $transcode_basename = $output_basename;
        $transcode_basename =~ s/\.\Q$file_ext\E$/.mpg/;
     my $transcode_filename = "$output_path/$transcode_basename";
