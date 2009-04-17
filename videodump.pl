@@ -286,14 +286,28 @@ lockfile location (default: /tmp/.vd-pl.lock)
 =item B<-m>
 
 lockfile location (default: 0), 1 and 2 require -p
-0 = Raw dump to output folder (-o), recording will be available for manual play as soon as recording starts,
-    will NOT show up in mythtv mysql "recorded shows" list, best dumped to default MythVideo Gallery folder.
-1 = Same as 0, but the output folder (-o) must be where mythtv recordings are stored by default,
-    will be imported into mysql imediately after it is done recording in raw format.
-    Requires mysql password (-p) switch.
-2 = Same as 1, but will be converted to mythtv native mpeg2 format with commercial flagging points,
-    will show up in the recorded shows list after mpeg2 conversion (time will vary based on CPU).
-    Requires mysql password (-p) switch.
+
+=over
+
+=item B<0>
+
+Raw dump to output folder (-o), recording will be available for manual play as
+soon as recording starts, will NOT show up in mythtv mysql "recorded shows"
+list, best dumped to default MythVideo Gallery folder.
+
+=item B<1>
+
+Same as 0, but the output folder (-o) must be where mythtv recordings are
+stored by default, will be imported into mysql imediately after it is done
+recording in raw format.  Requires mysql password (-p) switch.
+
+=item B<2>
+
+Same as 1, but will be converted to mythtv native mpeg2 format with commercial
+flagging points, will show up in the recorded shows list after mpeg2 conversion
+(time will vary based on CPU).  Requires mysql password (-p) switch.
+
+=back
 
 =item B<-n>
 
