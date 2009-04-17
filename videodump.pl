@@ -86,14 +86,14 @@ while( not flock $lockfile_fh, (LOCK_EX|LOCK_NB) ) {
 open my $output, ">", $output_filename or die "error opening output file \"$output_filename\": $!";
 
 # now lets change the channel
-    system ("irsend SEND_ONCE $remote SELECT"); # needs to be outside of sub change_channel
+    system ("irsend", "SEND_ONCE", $remote, "SELECT"); # needs to be outside of sub change_channel
     sleep 1; # give it a second to wake up before sending the digits
 
 sub change_channel {
     my($channel_digit) = @_;
 
 #some set top boxes need to be woken up
-    system ("irsend SEND_ONCE $remote $channel_digit");
+    system ("irsend", "SEND_ONCE", $remote, $channel_digit);
     sleep 0.2; # channel change speed, 1 sec is too long, some boxes may timeout
 }
 
