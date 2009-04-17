@@ -178,27 +178,32 @@ FFMPEG: {
 #system('/usr/bin/mythtranscode',"--mpeg2 --buildindex --allkeys --showprogress --infile","$output_path$output_filename");
 
 if ($myth_import = 2) {
-system('ffmpeg',
-     "-i" => $output_filename,
-     "-acodec" => "ac3", "-ab" => "192k",
-     "-vcodec" => "mpeg2video", "-b" => "10.0M", "-cmp" => 2, "-subcmp" => 2,
-     "-mbd" => 2, "-trellis" => 1,
-     "$output_path/$name", $start_time_name, $channel, "re-encoded.mpg");
+    my $transcode_basename = $output_basename;
+       $transcode_basename =~ s/\.\Q$file_ext\E$/.mpg/;
+    my $transcode_filename = "$output_path/$transcode_basename";
 
-# need command here to delete original file if the above conversion was sucessfull
+    unless( -f $transcode_filename ) {
+        system('ffmpeg',
 
-my $output_basename = "$name $start_time_name $channel re-encoded.mpg"; # the new target file name
-my $output_filename = "$output_path/$output_basename";# the new target file name and path
-system("echo $output_basename");
-system("echo $output_filename");
+             "-i" => $output_filename,
+             "-acodec" => "ac3", "-ab" => "192k",
+             "-vcodec" => "mpeg2video", "-b" => "10.0M", "-cmp" => 2, "-subcmp" => 2,
+             "-mbd" => 2, "-trellis" => 1, $transcode_filename);
 
-# lets fix the mpg to be sure it doesn't have any errors
-# this may not be the best way to do it
-# first optimize database, the script is going to need 755 perms or something similar
-# NOTE: script won't need 755 if you fork and use $^X
-#system($^X,"/usr/share/doc/mythtv-backend/contrib/optimize_mythdb.pl");
- } 
+        # use these from here down
+        $output_basename = $transcode_basename;
+        $output_filename = $transcode_filename;
 
+        # lets fix the mpg to be sure it doesn't have any errors
+        # this may not be the best way to do it
+        # first optimize database, the script is going to need 755 perms or something similar
+        # NOTE: script won't need 755 if you fork and use $^X
+        #system($^X,"/usr/share/doc/mythtv-backend/contrib/optimize_mythdb.pl");
+
+    } else {
+        warn "WARNING: skipping transcode, already in mpeg format?\n";
+    }
+}
 
 # now let's import it into the mythtv database
 if( $mysql_password ) {
