@@ -132,7 +132,6 @@ FFMPEG: {
         "-i"      => $video_device,               # the input device
         "-vcodec" => "copy",                      # copy the video codec without transcoding, probably asking to much to call a specific encoder for real time capture
         "-acodec" => "copy",                      # what do you know, AAC is playable by default by the internal myth player
-        "-ab" => "192k",
         "-t"      => $show_length-$buffer_time,   # -t record for this many seconds ... $o{t} was multiplied by 60 and is in minutes....minus buffer/recovery time
 
     $output_filename);
