@@ -16,7 +16,7 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.43";
+our $VERSION = "1.45";
 
 my %o;
 
@@ -62,6 +62,7 @@ $video_device = File::Spec->rel2abs($video_device);
 
 my $start_time      = strftime('%y-%m-%d %H:%M:%S', localtime); # need colons for future import into mythtv database, not file name.
 my $start_time_name = strftime('%y-%m-%d %l.%M%P', localtime);
+my $commflag_name   = strftime('%y%m%d%H%M%S', localtime); # needed so we can commflag our recording, myth.rebuilddatabase.pl renames the file to this format after it imports it
 
 my $output_basename = basename("$name $start_time_name $channel.$file_ext"); # filename includes date, time and channel, colons can cause issues ouside of linux
 my $output_filename = File::Spec->rel2abs( File::Spec->catfile($output_path, $output_basename) );
@@ -128,7 +129,7 @@ if (length($channel) > 2) {
 FFMPEG: {
     local $SIG{PIPE} = sub { die "execution failure while forking ffmpeg!\n"; };
 
-    my @cmd = ('/usr/bin/ffmpeg',
+    my @cmd = ('ffmpeg',
 
         "-y",                                     # it's ok to overwrite the output file
         "-i"      => $video_device,               # the input device
@@ -175,10 +176,6 @@ FFMPEG: {
 }
 
 
-
-# now that we know where it is, we can fix any errors in file that was just created
-#system('/usr/bin/mythtranscode',"--mpeg2 --buildindex --allkeys --showprogress --infile","$output_path$output_filename");
-
 if ($myth_import == 2) {
     my $transcode_basename = $output_basename;
        $transcode_basename =~ s/\.\Q$file_ext\E$/.mpg/;
@@ -192,15 +189,21 @@ if ($myth_import == 2) {
              "-vcodec" => "mpeg2video", "-b" => "10.0M", "-cmp" => 2, "-subcmp" => 2,
              "-mbd" => 2, "-trellis" => 1, $transcode_filename);
 
+# probably need a command here to delete the original if the conversion was sucessfull???
+# if, then, type of command, but not sure how to tell if it converted sucessfully
+
         # use these from here down
         $output_basename = $transcode_basename;
         $output_filename = $transcode_filename;
+        $file_ext = "mpg";
 
-        # lets fix the mpg to be sure it doesn't have any errors
+        # lets optimize the database to be sure it doesn't have any errors
         # this may not be the best way to do it
         # first optimize database, the script is going to need 755 perms or something similar
         # NOTE: script won't need 755 if you fork and use $^X
-        #system($^X,"/usr/share/doc/mythtv-backend/contrib/optimize_mythdb.pl");
+        # Originally located at /usr/share/doc/mythtv-backend/contrib/
+        # You will need to untar and place in your path.
+        #system($^X,"optimize_mythdb.pl");
 
     } else {
         warn "WARNING: skipping transcode, already in mpeg format?\n";
@@ -221,6 +224,12 @@ if( $mysql_password ) {
         "--answer", ($show_length)/60, "--answer", "y");
 }
 
+#lets try to start the commercial detection
+system("mythcommflag","-f","$output_path/$channel\_$commflag_name.$file_ext");
+#system('echo',"$output_path/$channel\_$commflag_name.$file_ext");
+
+# to be sure the recorded file plays well, lets do a (non-reencoding) transcode of the file
+system('mythtranscode',"--mpeg2","--buildindex","--allkeys","--showprogress","--infile","$output_path/$channel\_$commflag_name.$file_ext");
 
 # some database cleanup only if there are files that exist without entries or entries that exist without files
 #system("myth.find_orphans.pl", "--dodbdelete", "--pass", $mysql_password);
