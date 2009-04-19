@@ -1,3 +1,11 @@
+videodump-pl (1.43-1) unstable; urgency=low
+
+  * we fixed a lot of bugs
+  * cleaned up the docs
+  * clarified a few things
+
+ -- Paul Miller <jettero@cpan.org>  Fri, 17 Apr 2009 22:34:00 -0500
+
 videodump-pl (1.41-1) unstable; urgency=low
 
   * just skelling this up for future use

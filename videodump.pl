@@ -3,6 +3,8 @@
 # videodump for Hauppauge HD PVR 1212 by David & Paul
 
 use strict;
+use warnings;
+
 use Fcntl qw(:flock);
 use Getopt::Std;
 use POSIX qw(setsid strftime);
@@ -71,7 +73,7 @@ if( $o{f} ) {
     setsid() or die "can't create a new session: $!";
 
     close STDOUT; # NOTE: normally a daemonized process will do this...
-    close STDINT; # the reason I added it today was that many of the ffmpeg examples
+    close STDIN;  # the reason I added it today was that many of the ffmpeg examples
                   # use ffmpeg -b -l -a -h < /dev/null & when they background things.
 }
 
