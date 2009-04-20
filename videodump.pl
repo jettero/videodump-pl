@@ -102,7 +102,7 @@ sub change_channel {
 
 sleep 1;
 
-if (length($channel) > 2) {
+if (length($channel) > 3) {
     change_channel(substr($channel, 0, 1));
     change_channel(substr($channel, 1, 1));
     change_channel(substr($channel, 2, 1));
