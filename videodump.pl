@@ -16,7 +16,7 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.45";
+our $VERSION = "1.46";
 
 my %o;
 
@@ -88,7 +88,7 @@ while( not flock $lockfile_fh, (LOCK_EX|LOCK_NB) ) {
 }
 open my $output, ">", $output_filename or die "error opening output file \"$output_filename\": $!";
 
-# now lets change the channel
+# now lets change the channel, now compatable with up to 4 digits
     system ("irsend", "SEND_ONCE", $remote, "SELECT"); # needs to be outside of sub change_channel
     sleep 1; # give it a second to wake up before sending the digits
 
@@ -103,6 +103,12 @@ sub change_channel {
 sleep 1;
 
 if (length($channel) > 2) {
+    change_channel(substr($channel, 0, 1));
+    change_channel(substr($channel, 1, 1));
+    change_channel(substr($channel, 2, 1));
+    change_channel(substr($channel, 3, 1));
+
+} elsif (length($channel) > 2) {
     change_channel(substr($channel, 0, 1));
     change_channel(substr($channel, 1, 1));
     change_channel(substr($channel, 2, 1));
