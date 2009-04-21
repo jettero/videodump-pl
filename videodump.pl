@@ -16,7 +16,7 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.47";
+our $VERSION = "1.48";
 
 my %o;
 
@@ -233,11 +233,12 @@ if( $mysql_password ) {
 system("mythcommflag","-f","$output_path/$channel\_$commflag_name.$file_ext");
 #system('echo',"$output_path/$channel\_$commflag_name.$file_ext");
 
+# to be sure the recorded file plays well, lets do a (non-reencoding) transcode of the file
+system('mythtranscode',"--mpeg2","--buildindex","--allkeys","--showprogress","--infile","$output_path/$channel\_$commflag_name.$file_ext");
+
 }
 
 
-# to be sure the recorded file plays well, lets do a (non-reencoding) transcode of the file
-system('mythtranscode',"--mpeg2","--buildindex","--allkeys","--showprogress","--infile","$output_path/$channel\_$commflag_name.$file_ext");
 
 # some database cleanup only if there are files that exist without entries or entries that exist without files
 #system("myth.find_orphans.pl", "--dodbdelete", "--pass", $mysql_password);
