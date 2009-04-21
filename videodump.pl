@@ -165,9 +165,12 @@ FFMPEG: {
     # that sort of stuff.
 
     open my $log, ">", "/tmp/$base.log" or die $!;
-    print $log localtime() . "(0): $_" while <$stdout>; # this is fine for now, but it may cause problems later
-    print $log localtime() . "(1): $_" while <$stderr>; #  specifically, lots of stderr may jam the pipe() before
-                                                        #   we get around to reading it
+    print $log localtime() . "(0): $_" while <$stdout>;
+
+    # NOTE: from manpage, "If CHLD_ERR is false, or the same file descriptor as
+    # CHLD_OUT, then STDOUT and STDERR of the child are on the same
+    # filehandle." -- solves a concurrency problem anyway.  Awesome.
+    # ### print $log localtime() . "(1): $_" while <$stderr>;
 
     waitpid($pid, 0); # ignore the return value... it probably returned.  (may also cause problems later)
                       # ffmpeg exit status is returned in $?
