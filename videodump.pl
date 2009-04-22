@@ -16,7 +16,7 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.49";
+our $VERSION = "1.50";
 
 my %o;
 
@@ -219,11 +219,6 @@ if( defined $myth_import ) {
             warn "WARNING: skipping transcode, already in mpeg format?\n";
         }
 
-        # XXX: is it ok to do this before the import?
-        systemx("mythcommflag","-f","$output_path/$channel\_$commflag_name.$file_ext");
-        systemx('echo',"$output_basename");
-        systemx('echo',"$output_path");
-        systemx('echo',"$output_path/$channel\_$commflag_name.$file_ext");
     }
 
     # -m 1 and -m 2 both need a rebuilddatabase call
@@ -231,6 +226,11 @@ if( defined $myth_import ) {
     # XXX: myth.rebuilddatabase.pl must be unziped and installed with correct perms somewhere in the path
     # mythbuntu distributes it in gz format to this location, however, your distro may be different
     # /usr/share/doc/mythtv-backend/contrib/myth.rebuilddatabase.pl.gz
+
+    # to be sure the recorded file plays well, lets do a (non-reencoding) transcode of the file
+    systemx('mythtranscode', 
+        "--mpeg2", "--buildindex", "--allkeys", "--showprogress", "--infile", 
+        "$output_path/$output_basename");
 
     # import into MythTV mysql database so it is listed with all your other recorded shows
     systemx("myth.rebuilddatabase.pl",
@@ -241,9 +241,20 @@ if( defined $myth_import ) {
 
     # to be sure the recorded file plays well, lets do a (non-reencoding) transcode of the file
     # XXX: we do this after import in any import mode?  is that right?  Should it go before the import?
-    systemx('mythtranscode', 
-        "--mpeg2", "--buildindex", "--allkeys", "--showprogress", "--infile", 
-        "$output_path/$channel\_$commflag_name.$file_ext");
+    # The import changes the file name, so if transcode is done after the import, this command is slightly different
+    # Not sure if it should be before or after.
+#    systemx('mythtranscode', 
+#        "--mpeg2", "--buildindex", "--allkeys", "--showprogress", "--infile", 
+#        "$output_path/$channel\_$commflag_name.$file_ext");
+
+    # Now let's flag the commercials
+    # It doesn't look like "real-time flagging" can be done.
+    # This process takes longer than normal with the files created by the HDPVR.  This is something that should be figgured out at some point.
+        systemx("mythcommflag","-f","$output_path/$channel\_$commflag_name.$file_ext");
+        systemx('echo',"$output_basename");
+        systemx('echo',"$output_path");
+        systemx('echo',"$output_path/$channel\_$commflag_name.$file_ext");
+
 }
 
 # some database cleanup only if there are files that exist without entries or entries that exist without files
