@@ -89,14 +89,14 @@ while( not flock $lockfile_fh, (LOCK_EX|LOCK_NB) ) {
 open my $output, ">", $output_filename or die "error opening output file \"$output_filename\": $!";
 
 # now lets change the channel, now compatable with up to 4 digits
-    system ("irsend", "SEND_ONCE", $remote, "SELECT"); # needs to be outside of sub change_channel
+    systemx ("irsend", "SEND_ONCE", $remote, "SELECT"); # needs to be outside of sub change_channel
     sleep 1; # give it a second to wake up before sending the digits
 
 sub change_channel {
     my($channel_digit) = @_;
 
 #some set top boxes need to be woken up
-    system ("irsend", "SEND_ONCE", $remote, $channel_digit);
+    systemx ("irsend", "SEND_ONCE", $remote, $channel_digit);
     sleep 0.2; # channel change speed, 1 sec is too long, some boxes may timeout
 }
 
@@ -123,12 +123,12 @@ if (length($channel) > 3) {
 
 # may or may not need to send the ENTER command after the channel numbers are sent
 # remove comment from next line if necessary, may need to try OK or ENTER instead of SELECT.
-#system ("irsend SEND_ONCE $remote SELECT");
+#systemx ("irsend SEND_ONCE $remote SELECT");
 
 
-#system(echo,$show_length);
-#system(echo,$buffer_time);
-#system(echo,$show_length-$buffer_time);
+#systemx(echo,$show_length);
+#systemx(echo,$buffer_time);
+#systemx(echo,$show_length-$buffer_time);
 #die;
 
 #capture native AVS format h264 AAC
@@ -194,7 +194,7 @@ if( defined $myth_import ) {
         my $transcode_filename = "$output_path/$transcode_basename";
 
         unless( -f $transcode_filename ) {
-            system('ffmpeg',
+            systemx('ffmpeg',
 
                  "-i" => $output_filename,
                  "-acodec" => "ac3", "-ab" => "192k",
@@ -215,17 +215,17 @@ if( defined $myth_import ) {
             # NOTE: script won't need 755 if you fork and use $^X
             # Originally located at /usr/share/doc/mythtv-backend/contrib/
             # You will need to untar and place in your path.
-            #system($^X,"optimize_mythdb.pl");
+            #systemx($^X,"optimize_mythdb.pl");
 
         } else {
             warn "WARNING: skipping transcode, already in mpeg format?\n";
         }
 
         # XXX: is it ok to do this before the import?
-        system("mythcommflag","-f","$output_path/$channel\_$commflag_name.$file_ext");
-        system('echo',"$output_basename");
-        system('echo',"$output_path");
-        system('echo',"$output_path/$channel\_$commflag_name.$file_ext");
+        systemx("mythcommflag","-f","$output_path/$channel\_$commflag_name.$file_ext");
+        systemx('echo',"$output_basename");
+        systemx('echo',"$output_path");
+        systemx('echo',"$output_path/$channel\_$commflag_name.$file_ext");
     }
 
     # -m 1 and -m 2 both need a rebuilddatabase call
@@ -235,7 +235,7 @@ if( defined $myth_import ) {
     # /usr/share/doc/mythtv-backend/contrib/myth.rebuilddatabase.pl.gz
 
     # import into MythTV mysql database so it is listed with all your other recorded shows
-    system("myth.rebuilddatabase.pl",
+    systemx("myth.rebuilddatabase.pl",
         "--dbhost", "localhost", "--pass", $mysql_password, "--dir", $output_path, "--file", $output_basename, 
         "--answer", "y", "--answer", $channel, "--answer", $o{n}, "--answer", $subtitle, 
         "--answer", $description, "--answer", $start_time, "--answer", "Default", 
@@ -243,13 +243,13 @@ if( defined $myth_import ) {
 
     # to be sure the recorded file plays well, lets do a (non-reencoding) transcode of the file
     # XXX: we do this after import in any import mode?  is that right?  Should it go before the import?
-    system('mythtranscode', 
+    systemx('mythtranscode', 
         "--mpeg2", "--buildindex", "--allkeys", "--showprogress", "--infile", 
         "$output_path/$channel\_$commflag_name.$file_ext");
 }
 
 # some database cleanup only if there are files that exist without entries or entries that exist without files
-#system("myth.find_orphans.pl", "--dodbdelete", "--pass", $mysql_password);
+#systemx("myth.find_orphans.pl", "--dodbdelete", "--pass", $mysql_password);
 
 __END__
 # misc comment
@@ -400,3 +400,15 @@ C<http://github.com/jettero/videodump-pl>
 =head1 SEE ALSO
 
 perl(1), ffmpeg(1)
+
+=cut
+
+# stolen from IPC::System::Simple (partially)
+use Carp;
+sub systemx {
+    my $command = shift;
+    CORE::system { $command } $command, @_;
+
+    croak "child process failed to execute" if $? == -1;
+    croak "child process returned error status" if $? != 0;
+}
