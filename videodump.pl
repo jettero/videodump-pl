@@ -16,7 +16,7 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.48";
+our $VERSION = "1.49";
 
 my %o;
 
@@ -232,14 +232,20 @@ if( $mysql_password ) {
         "--answer", $description, "--answer", $start_time, "--answer", "Default", 
         "--answer", ($show_length)/60, "--answer", "y");
 
+if( $myth_import ) {
 #lets try to start the commercial detection
 system("mythcommflag","-f","$output_path/$channel\_$commflag_name.$file_ext");
-#system('echo',"$output_path/$channel\_$commflag_name.$file_ext");
+system('echo',"$output_basename");
+system('echo',"$output_path");
+system('echo',"$output_path/$channel\_$commflag_name.$file_ext");
+}
 
 # to be sure the recorded file plays well, lets do a (non-reencoding) transcode of the file
 system('mythtranscode',"--mpeg2","--buildindex","--allkeys","--showprogress","--infile","$output_path/$channel\_$commflag_name.$file_ext");
 
 }
+
+
 
 
 
@@ -313,7 +319,7 @@ lockfile location (default: /tmp/.vd-pl.lock)
 
 =item B<-m>
 
-lockfile location (default: 0), 1 and 2 require -p
+mysql import type (default: 0), 1 and 2 requires -p
 
 =over
 
