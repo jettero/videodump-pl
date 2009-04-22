@@ -20,7 +20,7 @@ our $VERSION = "1.49";
 
 my %o;
 
-getopts("Hhfb:c:d:g:L:m:n:o:p:r:s:t:v:x:", \%o) or pod2usage();
+getopts("HhIfb:c:d:g:L:m:n:o:p:r:s:t:v:x:", \%o) or pod2usage();
 pod2usage() if $o{h};
 pod2usage(-verbose=>1) if $o{H};
 
@@ -38,6 +38,7 @@ my $show_length    = ($o{t} || 30)*60; # convert time to minutes
 my $buffer_time    = $o{b} || 7; # subtract a few seconds from show length to give unit time to recover for next recording if one immediately follows
 my $video_device   = $o{v} || '/dev/video0';
 my $file_ext       = $o{x} || "ts"; # good idea to leave it default, internal player plays the default well, if you want to play with some other player, then consider a change
+my $skip_irsend    = $o{I};
 
 
 if ($show_length - $buffer_time <= 0 ) {
@@ -89,42 +90,43 @@ while( not flock $lockfile_fh, (LOCK_EX|LOCK_NB) ) {
 open my $output, ">", $output_filename or die "error opening output file \"$output_filename\": $!";
 
 # now lets change the channel, now compatable with up to 4 digits
+unless( $skip_irsend ) {
     systemx ("irsend", "SEND_ONCE", $remote, "SELECT"); # needs to be outside of sub change_channel
     sleep 1; # give it a second to wake up before sending the digits
 
-sub change_channel {
-    my($channel_digit) = @_;
+    sub change_channel {
+        my($channel_digit) = @_;
 
-#some set top boxes need to be woken up
-    systemx ("irsend", "SEND_ONCE", $remote, $channel_digit);
-    sleep 0.2; # channel change speed, 1 sec is too long, some boxes may timeout
+    #some set top boxes need to be woken up
+        systemx ("irsend", "SEND_ONCE", $remote, $channel_digit);
+        sleep 0.2; # channel change speed, 1 sec is too long, some boxes may timeout
+    }
+
+    sleep 1;
+
+    if (length($channel) > 3) {
+        change_channel(substr($channel, 0, 1));
+        change_channel(substr($channel, 1, 1));
+        change_channel(substr($channel, 2, 1));
+        change_channel(substr($channel, 3, 1));
+
+    } elsif (length($channel) > 2) {
+        change_channel(substr($channel, 0, 1));
+        change_channel(substr($channel, 1, 1));
+        change_channel(substr($channel, 2, 1));
+
+    } elsif (length($channel) > 1) {
+        change_channel(substr($channel, 0, 1));
+        change_channel(substr($channel, 1, 1));
+
+    } else {
+        change_channel(substr($channel, 0, 1));
+    }
+
+    # may or may not need to send the ENTER command after the channel numbers are sent
+    # remove comment from next line if necessary, may need to try OK or ENTER instead of SELECT.
+    #systemx ("irsend SEND_ONCE $remote SELECT");
 }
-
-sleep 1;
-
-if (length($channel) > 3) {
-    change_channel(substr($channel, 0, 1));
-    change_channel(substr($channel, 1, 1));
-    change_channel(substr($channel, 2, 1));
-    change_channel(substr($channel, 3, 1));
-
-} elsif (length($channel) > 2) {
-    change_channel(substr($channel, 0, 1));
-    change_channel(substr($channel, 1, 1));
-    change_channel(substr($channel, 2, 1));
-
-} elsif (length($channel) > 1) {
-    change_channel(substr($channel, 0, 1));
-    change_channel(substr($channel, 1, 1));
-
-} else {
-    change_channel(substr($channel, 0, 1));
-}
-
-# may or may not need to send the ENTER command after the channel numbers are sent
-# remove comment from next line if necessary, may need to try OK or ENTER instead of SELECT.
-#systemx ("irsend SEND_ONCE $remote SELECT");
-
 
 #systemx(echo,$show_length);
 #systemx(echo,$buffer_time);
@@ -285,6 +287,7 @@ with any hardware (/dev/video*) type device that dumps a video/audio stream.
     -t minutes (default 30)
     -v video device (default /dev/video0)
     -x file extension (default ts)
+    -I skip irsend commands
 
 =head1 OPTIONS
 
@@ -380,6 +383,11 @@ video device (default /dev/video0)
 
 file extension (default ts, ts gives mpeg-ts container to match mythtv's
 container, will change to mpg after re-encoding video)
+
+=item B<-I>
+
+Skip all irsend commands.  These commands are intended to change
+channels and things, which may not be applicable to all users.
 
 =back
 
