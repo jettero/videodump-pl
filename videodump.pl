@@ -176,8 +176,8 @@ FFMPEG: {
                       # ffmpeg exit status is returned in $?
 
     if( $? ) {
-        warn "ffmpeg error, see stdout/stderr logs for further information";
         move($output_filename, "$output_path/$output_basename-err"); # if this fails, it doesn't really matter
+        die "ffmpeg error, see tmp error log dump (/tmp/$base.log) for further information, video moved to: $output_path/$output_basename-err\n";
     }
 
     # no # flock $lockfile_fh, LOCK_UN or die $!; # seems like a good idea, but is actually a bad practice, long story
