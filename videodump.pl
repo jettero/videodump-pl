@@ -250,11 +250,10 @@ if( defined $myth_import ) {
     # Now let's flag the commercials
     # It doesn't look like "real-time flagging" can be done.
     # This process takes longer than normal with the files created by the HDPVR.  This is something that should be figgured out at some point.
-        systemx("mythcommflag","-f","$output_path/$channel\_$commflag_name.$file_ext");
-        systemx('echo',"$output_basename");
-        systemx('echo',"$output_path");
-        systemx('echo',"$output_path/$channel\_$commflag_name.$file_ext");
-
+    systemx("mythcommflag","-f","$output_path/$channel\_$commflag_name.$file_ext");
+    systemx('echo',"$output_basename");
+    systemx('echo',"$output_path");
+    systemx('echo',"$output_path/$channel\_$commflag_name.$file_ext");
 }
 
 # some database cleanup only if there are files that exist without entries or entries that exist without files
