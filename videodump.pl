@@ -28,7 +28,7 @@ my $lockfile       = $o{L} || "/tmp/.vd-pl.lock";
 my $channel        = $o{c} || "";
 my $description    = $o{d} || "imported by HD PVR videodump & myth.rebuilddatabase.pl";
 my $group          = $o{g} || "mythtv";
-my $myth_import    = $o{m} || 0; # allows for different levels of importing into mythtv, see help file for details
+my $myth_import    = $o{m}; # allows for different levels of importing into mythtv, see help file for details
 my $name           = $o{n} || "manual_record";
 my $output_path    = $o{o} || '/var/lib/mythtv/videos/'; # this should be your default gallery folder, you may want to change this to your MythTV recorded shows folder if you use -p
 my $mysql_password = $o{p}; # xfPbTC5xgx
@@ -48,7 +48,7 @@ if ($mysql_password and not defined $myth_import) {
     die "If you supply a password for mysql, you need to tell me how to import with the -m switch!";
 }
 
-if (($myth_import == 1 or $myth_import == 2) and not defined $mysql_password) {
+if (defined $myth_import and not defined $mysql_password) {
     die "If you want me to import, you need to supply your mysql password!";
 }
 
@@ -184,43 +184,52 @@ FFMPEG: {
     close $lockfile_fh; # release the lock for the next process
 }
 
-
-if ($myth_import == 2) {
-    my $transcode_basename = $output_basename;
-       $transcode_basename =~ s/\.\Q$file_ext\E$/.mpg/;
-    my $transcode_filename = "$output_path/$transcode_basename";
-
-    unless( -f $transcode_filename ) {
-        system('ffmpeg',
-
-             "-i" => $output_filename,
-             "-acodec" => "ac3", "-ab" => "192k",
-             "-vcodec" => "mpeg2video", "-b" => "10.0M", "-cmp" => 2, "-subcmp" => 2,
-             "-mbd" => 2, "-trellis" => 1, $transcode_filename);
-
-# probably need a command here to delete the original if the conversion was sucessfull???
-# if, then, type of command, but not sure how to tell if it converted sucessfully
-
-        # use these from here down
-        $output_basename = $transcode_basename;
-        $output_filename = $transcode_filename;
-        $file_ext = "mpg";
-
-        # lets optimize the database to be sure it doesn't have any errors
-        # this may not be the best way to do it
-        # first optimize database, the script is going to need 755 perms or something similar
-        # NOTE: script won't need 755 if you fork and use $^X
-        # Originally located at /usr/share/doc/mythtv-backend/contrib/
-        # You will need to untar and place in your path.
-        #system($^X,"optimize_mythdb.pl");
-
-    } else {
-        warn "WARNING: skipping transcode, already in mpeg format?\n";
-    }
-}
-
 # now let's import it into the mythtv database
-if( $mysql_password ) {
+# XXX: I reordered this to make a smarter flow, and altered the -m docs to match
+if( defined $myth_import ) {
+    if ($myth_import == 2) {
+        # -m 2 means we transcode to native format
+        my $transcode_basename = $output_basename;
+           $transcode_basename =~ s/\.\Q$file_ext\E$/.mpg/;
+        my $transcode_filename = "$output_path/$transcode_basename";
+
+        unless( -f $transcode_filename ) {
+            system('ffmpeg',
+
+                 "-i" => $output_filename,
+                 "-acodec" => "ac3", "-ab" => "192k",
+                 "-vcodec" => "mpeg2video", "-b" => "10.0M", "-cmp" => 2, "-subcmp" => 2,
+                 "-mbd" => 2, "-trellis" => 1, $transcode_filename);
+
+            # probably need a command here to delete the original if the conversion was sucessfull???
+            # if, then, type of command, but not sure how to tell if it converted sucessfully
+
+            # use these from here down
+            $output_basename = $transcode_basename;
+            $output_filename = $transcode_filename;
+            $file_ext = "mpg";
+
+            # lets optimize the database to be sure it doesn't have any errors
+            # this may not be the best way to do it
+            # first optimize database, the script is going to need 755 perms or something similar
+            # NOTE: script won't need 755 if you fork and use $^X
+            # Originally located at /usr/share/doc/mythtv-backend/contrib/
+            # You will need to untar and place in your path.
+            #system($^X,"optimize_mythdb.pl");
+
+        } else {
+            warn "WARNING: skipping transcode, already in mpeg format?\n";
+        }
+
+        # XXX: is it ok to do this before the import?
+        system("mythcommflag","-f","$output_path/$channel\_$commflag_name.$file_ext");
+        system('echo',"$output_basename");
+        system('echo',"$output_path");
+        system('echo',"$output_path/$channel\_$commflag_name.$file_ext");
+    }
+
+    # -m 1 and -m 2 both need a rebuilddatabase call
+
     # XXX: myth.rebuilddatabase.pl must be unziped and installed with correct perms somewhere in the path
     # mythbuntu distributes it in gz format to this location, however, your distro may be different
     # /usr/share/doc/mythtv-backend/contrib/myth.rebuilddatabase.pl.gz
@@ -232,22 +241,12 @@ if( $mysql_password ) {
         "--answer", $description, "--answer", $start_time, "--answer", "Default", 
         "--answer", ($show_length)/60, "--answer", "y");
 
-if( $myth_import ) {
-#lets try to start the commercial detection
-system("mythcommflag","-f","$output_path/$channel\_$commflag_name.$file_ext");
-system('echo',"$output_basename");
-system('echo',"$output_path");
-system('echo',"$output_path/$channel\_$commflag_name.$file_ext");
+    # to be sure the recorded file plays well, lets do a (non-reencoding) transcode of the file
+    # XXX: we do this after import in any import mode?  is that right?  Should it go before the import?
+    system('mythtranscode', 
+        "--mpeg2", "--buildindex", "--allkeys", "--showprogress", "--infile", 
+        "$output_path/$channel\_$commflag_name.$file_ext");
 }
-
-# to be sure the recorded file plays well, lets do a (non-reencoding) transcode of the file
-system('mythtranscode',"--mpeg2","--buildindex","--allkeys","--showprogress","--infile","$output_path/$channel\_$commflag_name.$file_ext");
-
-}
-
-
-
-
 
 # some database cleanup only if there are files that exist without entries or entries that exist without files
 #system("myth.find_orphans.pl", "--dodbdelete", "--pass", $mysql_password);
@@ -319,27 +318,27 @@ lockfile location (default: /tmp/.vd-pl.lock)
 
 =item B<-m>
 
-mysql import type (default: 0), 1 and 2 requires -p
+mysql import type 1 and 2 requires -p
+
+When -m isn't specified, this script simply does a raw dump to output folder
+(-o).  Recording will be available for manual play as soon as recording starts,
+will NOT show up in mythtv mysql "recorded shows" list, best dumped to default
+MythVideo Gallery folder.
 
 =over
 
-=item B<0>
-
-Raw dump to output folder (-o), recording will be available for manual play as
-soon as recording starts, will NOT show up in mythtv mysql "recorded shows"
-list, best dumped to default MythVideo Gallery folder.
-
 =item B<1>
 
-Same as 0, but the output folder (-o) must be where mythtv recordings are
-stored by default, will be imported into mysql imediately after it is done
-recording in raw format.  Requires mysql password (-p) switch.
+The output folder (-o) must be where mythtv recordings are stored by default.
+Shows will be imported into mysql imediately after they are done recording in
+raw format.  Requires mysql password (-p) switch!
 
 =item B<2>
 
-Same as 1, but will be converted to mythtv native mpeg2 format with commercial
-flagging points, will show up in the recorded shows list after mpeg2 conversion
-(time will vary based on CPU).  Requires mysql password (-p) switch.
+Same as 1, but shows will be converted to mythtv native mpeg2 format with
+commercial flagging points.  They will also show up in the recorded shows list
+after mpeg2 conversion (time will vary based on CPU).  Requires mysql password
+(-p) switch.
 
 =back
 
