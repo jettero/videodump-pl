@@ -253,6 +253,16 @@ if( defined $myth_import ) {
 # some database cleanup only if there are files that exist without entries or entries that exist without files
 #systemx("myth.find_orphans.pl", "--dodbdelete", "--pass", $mysql_password);
 
+# stolen from IPC::System::Simple (partially)
+use Carp;
+sub systemx {
+    my $command = shift;
+    CORE::system { $command } $command, @_;
+
+    croak "child process failed to execute" if $? == -1;
+    croak "child process returned error status" if $? != 0;
+}
+
 __END__
 # misc comment
 
@@ -410,13 +420,3 @@ C<http://github.com/jettero/videodump-pl>
 perl(1), ffmpeg(1)
 
 =cut
-
-# stolen from IPC::System::Simple (partially)
-use Carp;
-sub systemx {
-    my $command = shift;
-    CORE::system { $command } $command, @_;
-
-    croak "child process failed to execute" if $? == -1;
-    croak "child process returned error status" if $? != 0;
-}
