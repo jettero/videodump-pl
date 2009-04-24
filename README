@@ -5,15 +5,12 @@ until full support for the Hauppauge HD PVR 1212 is released in 0.22.
 
 Limitations:
 
-1) The current version only records to the native AVS H.264 & AAC format and 
-copies it to the default video gallery(/var/lib/mythtv/videos/).
-
-2) You may have play around with the video players to see which one plays
+1) You may have play around with the video players to see which one plays
 the files best for you.  Depending on what extra options you set, your
 player may choke on it  Try all the different players:
 (INTERNAL vs VLC vs MPLAYER vs XINE vs ???).  Internal seems to do just fine.
 
-3) Must schedule the recording manually or with a cron job in /etc/crontab
+2) Must schedule the recording manually or with a cron job in /etc/crontab
 (which is what I do).  Yeah, a cron job is a pain, but for my weekly/daily
 shows, all I do is set it once and it's done.  No channel guide integration yet.
 
@@ -30,9 +27,11 @@ Secondary problems:
 changes.  It would be nice to lock it down.  I have other deivces and they
 sometimes switch places.
 
-2) The IR blaster/transmitter also stops working after every reboot.  I have to
-go into the MythBuntu Control Center, change the device to anything else and
-then back...strange.
+2) The IR blaster/transmitter also stops working after every reboot for me.  
+This is not in any way related to this script.  However, if you want to 
+change channels, it can be frustrating.  If anyone can help me with that, I 
+would appreciate it.  I have to go into the MythBuntu Control Center, change 
+the device to anything else and then back...strange.
 
 
 Assumptions:
@@ -99,6 +98,6 @@ This example will integrate into mysql and the MythTV recordings listing.  Your 
 path may be different, but it is the path to where your system puts it's normal 
 recordings.  The XXXXXXXX is the password for your mysql.
 
-    00 20 * * 4  mythtv   /home/user/temp/videodump.pl -c 183 -t 60 -n TestShow -o /recordings/Default/ -p XXXXXXXX -f
+    00 20 * * 4  mythtv   /home/user/temp/videodump.pl -c 183 -t 60 -n "TestShow 2" -o /recordings/Default/ -p XXXXXXXX -f
 
 *****************************
