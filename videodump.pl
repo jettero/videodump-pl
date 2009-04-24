@@ -130,57 +130,15 @@ unless( $skip_irsend ) {
 #die;
 
 #capture native AVS format h264 AAC
-FFMPEG: {
-    local $SIG{PIPE} = sub { die "execution failure while forking ffmpeg!\n"; };
+ffmpegx(
 
-    my @cmd = ('ffmpeg',
+    "-y",                                     # it's ok to overwrite the output file
+    "-i"      => $video_device,               # the input device
+    "-vcodec" => "copy",                      # copy the video codec without transcoding, probably asking to much to call a specific encoder for real time capture
+    "-acodec" => "copy",                      # what do you know, AAC is playable by default by the internal myth player
+    "-t"      => $show_length-$buffer_time,   # -t record for this many seconds ... $o{t} was multiplied by 60 and is in minutes....minus buffer/recovery time
 
-        "-y",                                     # it's ok to overwrite the output file
-        "-i"      => $video_device,               # the input device
-        "-vcodec" => "copy",                      # copy the video codec without transcoding, probably asking to much to call a specific encoder for real time capture
-        "-acodec" => "copy",                      # what do you know, AAC is playable by default by the internal myth player
-        "-t"      => $show_length-$buffer_time,   # -t record for this many seconds ... $o{t} was multiplied by 60 and is in minutes....minus buffer/recovery time
-
-    $output_filename);
-
-    my $base = basename($output_filename);
-    my ($output_filehandle, $stdout, $stderr);
-    my $pid = open3($output_filehandle, $stdout, $stderr, @cmd);
-
-    close $output_filehandle; # tell ffmpeg to ignore userinput on stdin
-
-    if( $group ) {
-        if( my $gid = getgrnam($group) ) {
-            chown $<, $gid, $output_filename or warn "couldn't change group of output file: $!";
-
-        } else {
-            warn "couldn't locate group \"$group\"\n";
-        }
-    }
-
-    # TODO: there should be a config option for the location of the logs and we
-    # should consider using syslogging features if users are of a mind to use
-    # that sort of stuff.
-
-    open my $log, ">", "/tmp/$base.log" or die $!;
-    print $log localtime() . "(0): $_" while <$stdout>;
-
-    # NOTE: from manpage, "If CHLD_ERR is false, or the same file descriptor as
-    # CHLD_OUT, then STDOUT and STDERR of the child are on the same
-    # filehandle." -- solves a concurrency problem anyway.  Awesome.
-    # ### print $log localtime() . "(1): $_" while <$stderr>;
-
-    waitpid($pid, 0); # ignore the return value... it probably returned.  (may also cause problems later)
-                      # ffmpeg exit status is returned in $?
-
-    if( $? ) {
-        move($output_filename, "$output_path/$output_basename-err"); # if this fails, it doesn't really matter
-        die "ffmpeg error, see tmp error log dump (/tmp/$base.log) for further information, video moved to: $output_path/$output_basename-err\n";
-    }
-
-    # no # flock $lockfile_fh, LOCK_UN or die $!; # seems like a good idea, but is actually a bad practice, long story
-    close $lockfile_fh; # release the lock for the next process
-}
+$output_filename);
 
 # now let's import it into the mythtv database
 # XXX: I reordered this to make a smarter flow, and altered the -m docs to match
@@ -192,7 +150,7 @@ if( defined $myth_import ) {
         my $transcode_filename = "$output_path/$transcode_basename";
 
         unless( -f $transcode_filename ) {
-            systemx('ffmpeg',
+            ffmpegx(
 
                  "-i" => $output_filename,
                  "-acodec" => "ac3", "-ab" => "192k",
@@ -259,14 +217,54 @@ if( defined $myth_import ) {
 # some database cleanup only if there are files that exist without entries or entries that exist without files
 #systemx("myth.find_orphans.pl", "--dodbdelete", "--pass", $mysql_password);
 
-# stolen from IPC::System::Simple (partially)
 use Carp;
 sub systemx {
+    # stolen from IPC::System::Simple (partially)
     my $command = shift;
     CORE::system { $command } $command, @_;
 
     croak "child process failed to execute" if $? == -1;
     croak "child process returned error status" if $? != 0;
+}
+
+sub ffmpegx {
+    # needed in more than one place
+
+    my @cmd = @_;
+    my $file = $cmd[-1];
+
+    local $SIG{PIPE} = sub { die "execution failure while forking ffmpeg!\n"; };
+
+    open my $log, ">>", "/tmp/$name.log" or die $!;
+    print $log localtime() . "\n-----started cmd[@cmd]\n";
+
+    my ($output_filehandle, $stdout, $stderr);
+    my $pid = open3($output_filehandle, $stdout, $stderr, ffmpeg=>@cmd);
+    close $output_filehandle;
+
+    if( $group ) {
+        if( my $gid = getgrnam($group) ) {
+            chown $<, $gid, $file or warn "couldn't change group of output file: $!";
+
+        } else {
+            warn "couldn't locate group \"$group\"\n";
+        }
+    }
+
+    print $log localtime() . "(0): $_" while <$stdout>;
+
+    # NOTE: from manpage, "If CHLD_ERR is false, or the same file descriptor as
+    # CHLD_OUT, then STDOUT and STDERR of the child are on the same
+    # filehandle." -- solves a concurrency problem anyway.  Awesome.
+    # ### print $log localtime() . "(1): $_" while <$stderr>;
+
+    waitpid($pid, 0); # ignore the return value... it probably returned.  (may also cause problems later)
+                      # ffmpeg exit status is returned in $?
+
+    if( $? ) {
+        move($file, "$file-err"); # if this fails, it doesn't really matter
+        die "ffmpeg error, see tmp error log dump (/tmp/$name.log) for further information, video moved to: $file-err\n";
+    }
 }
 
 __END__
