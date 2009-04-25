@@ -24,27 +24,29 @@ my $lockfile       = "/tmp/.vd-pl.lock";
 my $channel        = "";
 my $description    = "imported by HD PVR videodump & myth.rebuilddatabase.pl";
 my $group          = "mythtv";
-my $myth_import;
 my $name           = "manual_record";
 my $output_path    = '/var/lib/mythtv/videos/';
-my $mysql_password;
 my $remote         = "dish";
 my $subtitle       = "recorded by HD PVR videodump";
 my $show_length    = 1800;
 my $buffer_time    = 7;
 my $video_device   = '/dev/video0';
 my $file_ext       = "mp4";
+my $loglevel       = INFO;
+my $mysql_password;
+my $myth_import;
 my $skip_irsend;
 my $become_daemon;
-my $log_level      = INFO;
 my $logfile_fh;
+
+my @original_arguments = @ARGV;
 
 Getopt::Long::Configure("bundling"); # make switches case sensitive (and turn on bundling)
 # getopts("HhIfb:c:d:g:L:m:n:o:p:r:s:t:v:x:", \%o) or pod2usage();
 GetOptions(
     "lockfile|L=s"       => \$lockfile, 
-    "logfile|l=s"        => sub { open $logfile_fh, ">>", $_[1] or die "couldn't open logfile (\"$_[1]\") for write: $!" },
-    "log-level"          => sub { die "loglevel must be between 0 and 3 (inclusive)" unless $_[1]>=0 and $_[1]<=3 },
+    "logfile|l=s"        => \&setup_log,
+    "loglevel=i"         => sub { $loglevel=$_[1]; die "loglevel must be between 0 and 2 (inclusive)" unless $_[1]>=ERROR and $_[1]<=DEBUG },
     "channel|c=s"        => \$channel, 
     "description|d=s"    => \$description,
     "group|g=s"          => \$group,
@@ -87,32 +89,38 @@ my $output_basename = basename("$name $start_time_name $channel.$file_ext"); # f
 my $output_filename = File::Spec->rel2abs( File::Spec->catfile($output_path, $output_basename) );
 
 if( $become_daemon ) {
+    my $ppid = $$;
     # fork/daemonize -- copied from http://www.webreference.com/perl/tutorial/9/3.html
     defined(my $pid = fork) or die "can't fork: $!";
     exit if $pid;
     setsid() or die "can't create a new session: $!";
+    logmsg(INFO, "process $ppid forked into the background and became $$");
 }
 
 
 #lock the source and make sure it isn't currently being used
 open my $lockfile_fh, ">", $lockfile or die "error opening lockfile \"$lockfile\": $!";
 while( not flock $lockfile_fh, (LOCK_EX|LOCK_NB) ) {
+    # warnings are automatically logged
     warn "couldn't lock lockfile \"$lockfile,\" waiting for a turn...\n";
     sleep 5;
+}
+logmsg(INFO, "locked video device (actually $lockfile)");
+
+sub change_channel {
+    my($channel_digit) = @_;
+
+    #some set top boxes need to be woken up
+    logmsg(DEBUG, "irsend SEND_ONCE $remote $channel_digit");
+    systemx ("irsend", "SEND_ONCE", $remote, $channel_digit);
+    sleep 0.2; # channel change speed, 1 sec is too long, some boxes may timeout
 }
 
 # now lets change the channel, now compatable with up to 4 digits
 unless( $skip_irsend ) {
+    logmsg(DEBUG, "irsend SEND_ONCE $remote SELECT");
     systemx ("irsend", "SEND_ONCE", $remote, "SELECT"); # needs to be outside of sub change_channel
     sleep 1; # give it a second to wake up before sending the digits
-
-    sub change_channel {
-        my($channel_digit) = @_;
-
-    #some set top boxes need to be woken up
-        systemx ("irsend", "SEND_ONCE", $remote, $channel_digit);
-        sleep 0.2; # channel change speed, 1 sec is too long, some boxes may timeout
-    }
 
     sleep 1;
 
@@ -140,11 +148,6 @@ unless( $skip_irsend ) {
     #systemx ("irsend SEND_ONCE $remote SELECT");
 }
 
-#systemx(echo,$show_length);
-#systemx(echo,$buffer_time);
-#systemx(echo,$show_length-$buffer_time);
-#die;
-
 #capture native AVS format h264 AAC
 ffmpegx(
 
@@ -156,6 +159,7 @@ ffmpegx(
 
 $output_filename);
 
+logmsg(INFO, "releasing lock on video device (actually $lockfile)");
 close $lockfile_fh; # release the video device for the next recording process.
 
 # now let's import it into the mythtv database
@@ -219,9 +223,10 @@ if( defined $myth_import ) {
     # It doesn't look like "real-time flagging" can be done.
     # This process takes longer than normal with the files created by the HDPVR.  This is something that should be figgured out at some point.
     systemx("mythcommflag","-f","$output_path/$channel\_$commflag_name.$file_ext");
-    systemx('echo',"$output_basename");
-    systemx('echo',"$output_path");
-    systemx('echo',"$output_path/$channel\_$commflag_name.$file_ext");
+
+    logmsg(DEBUG, "output_basename:  $output_basename");
+    logmsg(DEBUG, "output_path:      $output_path");
+    logmsg(DEBUG, "mysterious blarg: $output_path/$channel\_$commflag_name.$file_ext");
 }
 
 # some database cleanup only if there are files that exist without entries or entries that exist without files
@@ -245,52 +250,57 @@ sub ffmpegx {
 
     local $SIG{PIPE} = sub { die "execution failure while forking ffmpeg!\n"; };
 
-    my $logfile = "/tmp/$name.log";
-    open my $log, ">>", $logfile or die $!;
-    print $log localtime() . "\n-----started cmd[@cmd]\n";
+    logmsg(INFO, "ffmpeg @cmd");
 
     my ($output_filehandle, $stdout, $stderr);
     my $pid = open3($output_filehandle, $stdout, $stderr, ffmpeg=>@cmd);
     close $output_filehandle;
 
-    print $log localtime() . "(0): $_" while <$stdout>;
+    logmsg(DEBUG, "ffmpeg output: $_") while <$stdout>;
 
     # NOTE: from manpage, "If CHLD_ERR is false, or the same file descriptor as
     # CHLD_OUT, then STDOUT and STDERR of the child are on the same
-    # filehandle." -- solves a concurrency problem anyway.  Awesome.
-    # ### print $log localtime() . "(1): $_" while <$stderr>;
+    # filehandle."
 
     waitpid($pid, 0); # ignore the return value... it probably returned.  (may also cause problems later)
                       # ffmpeg exit status is returned in $?
 
     if( $? ) {
         move($file, "$file-err"); # if this fails, it doesn't really matter
-        warn "\nffmpeg error, see tmp error log dump ($logfile) for further information, video moved to: $file-err\n";
-        print "\nThe last 15 lines of $logfile:\n";
-        exec(tail => '-n', 15, $logfile) or die "huh... $!";
+        die "ffmpeg exit error, video moved to: $file-err\n";
     }
 
     if( $group ) {
         if( my $gid = getgrnam($group) ) {
-            chown $<, $gid, $file or warn "couldn't change group of output file: $!";
+            chown $<, $gid, $file or warn "couldn't change group (to $gid) of output file ($file): $!";
 
         } else {
             warn "couldn't locate group \"$group\"\n";
         }
     }
-
-    # When everythign goes ok, we should probably remove the ffmpeg logdump.
-    close $log; unlink $logfile;
 }
 
-sub log {
+sub setup_log {
+    open $logfile_fh, ">>", $_[1] or die "couldn't open logfile (\"$_[1]\") for write: $!";
+    $SIG{__WARN__} = sub { warn $_[0]; logmsg(ERROR, "WARNING: $_[0]") };
+    $SIG{__DIE__}  = sub { warn $_[0]; logmsg(ERROR, "FATAL ERROR: $_[0]") };
+    eval 'END { logmsg(INFO, "process exiting") }; 1' or die "problem setting up exit log: $@";
+    logmsg(INFO, "process started loglevel: $loglevel; called as: $0 @original_arguments");
+}
+
+sub logmsg {
     return unless $logfile_fh;
-    my $level = shift;
-    return unless $level <= $level;
 
-    my $msg = shift; chomp $msg;
-    print $logfile_fh scalar(localtime), "[$$]: ", $msg, "\n";
+    my $current_level = shift;
+    return unless $current_level <= $loglevel;
+
+    my $msg = shift;
+       $msg =~ s/\n/ /g;
+       $msg =~ s/\s+$//;
+
+    print $logfile_fh scalar(localtime), " [$$]: ", ($current_level==DEBUG ? "(DEBUG) $msg" : $msg), "\n";
 }
+
 
 __END__
 # misc comment
@@ -317,6 +327,8 @@ with any hardware (/dev/video*) type device that dumps a video/audio stream.
     --background   (-f) fork/daemonize
     --group        (-g) group
     --lockfile     (-L) lockfile
+    --logfile      (-l) logfile (no logging unless specified)
+    --loglevel          0,1,2 - default: 1
     --myth-import  (-m) mythtv mysql import option (requires -p)
     --name         (-n) show name
     --output-path  (-o) output path
