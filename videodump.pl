@@ -236,7 +236,8 @@ sub ffmpegx {
 
     local $SIG{PIPE} = sub { die "execution failure while forking ffmpeg!\n"; };
 
-    open my $log, ">>", "/tmp/$name.log" or die $!;
+    my $logfile = "/tmp/$name.log";
+    open my $log, ">>", $logfile or die $!;
     print $log localtime() . "\n-----started cmd[@cmd]\n";
 
     my ($output_filehandle, $stdout, $stderr);
@@ -255,7 +256,9 @@ sub ffmpegx {
 
     if( $? ) {
         move($file, "$file-err"); # if this fails, it doesn't really matter
-        die "ffmpeg error, see tmp error log dump (/tmp/$name.log) for further information, video moved to: $file-err\n";
+        warn "\nffmpeg error, see tmp error log dump ($logfile) for further information, video moved to: $file-err\n";
+        print "\nThe last 15 lines of $logfile:\n";
+        exec(tail => '-n', 15, $logfile) or die "huh... $!";
     }
 
     if( $group ) {
@@ -267,6 +270,8 @@ sub ffmpegx {
         }
     }
 
+    # When everythign goes ok, we should probably remove the ffmpeg logdump.
+    close $log; unlink $logfile;
 }
 
 __END__
