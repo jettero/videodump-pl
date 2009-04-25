@@ -16,7 +16,7 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.50";
+our $VERSION = "1.51";
 
 my %o;
 
@@ -37,7 +37,7 @@ my $subtitle       = $o{s} || "recorded by HD PVR videodump";
 my $show_length    = ($o{t} || 30)*60; # convert time to minutes
 my $buffer_time    = $o{b} || 7; # subtract a few seconds from show length to give unit time to recover for next recording if one immediately follows
 my $video_device   = $o{v} || '/dev/video0';
-my $file_ext       = $o{x} || "ts"; # good idea to leave it default, internal player plays the default well, if you want to play with some other player, then consider a change
+my $file_ext       = $o{x} || "mp4"; # internal player plays the default well, MP4 and TS seem to play well with internal player.  MP4 converts to MPG better.  External players play MP4 well.
 my $skip_irsend    = $o{I};
 
 
