@@ -1,9 +1,11 @@
 #!/usr/bin/perl
-
 # videodump for Hauppauge HD PVR 1212 by David & Paul
+# see http://github.com/jettero/videodump-pl/ for further details.
 
 use strict;
 use warnings;
+
+use constant { ERROR => 0, INFO => 1, DEBUG => 2 };
 
 use Fcntl qw(:flock);
 use Getopt::Long;
@@ -34,11 +36,15 @@ my $video_device   = '/dev/video0';
 my $file_ext       = "mp4";
 my $skip_irsend;
 my $become_daemon;
+my $log_level      = INFO;
+my $logfile_fh;
 
 Getopt::Long::Configure("bundling"); # make switches case sensitive (and turn on bundling)
 # getopts("HhIfb:c:d:g:L:m:n:o:p:r:s:t:v:x:", \%o) or pod2usage();
 GetOptions(
     "lockfile|L=s"       => \$lockfile, 
+    "logfile|l=s"        => sub { open $logfile_fh, ">>", $_[1] or die "couldn't open logfile (\"$_[1]\") for write: $!" },
+    "log-level"          => sub { die "loglevel must be between 0 and 3 (inclusive)" unless $_[1]>=0 and $_[1]<=3 },
     "channel|c=s"        => \$channel, 
     "description|d=s"    => \$description,
     "group|g=s"          => \$group,
@@ -59,17 +65,11 @@ GetOptions(
 
 ) or pod2usage();
 
-if ($show_length - $buffer_time <= 0 ) {
-    die "Come on, you need to record for longer than that!: $!"; # $show_length - $buffer_time must be greater than zero seconds
-}
+die "record time must be longer than the time it takes the device to startup\n"
+    if $show_length - $buffer_time <= 0;
 
-if ($mysql_password and not defined $myth_import) {
-    die "If you supply a password for mysql, you need to tell me how to import with the -m switch!";
-}
-
-if (defined $myth_import and not defined $mysql_password) {
-    die "If you want me to import, you need to supply your mysql password!";
-}
+die "--mysql-import/-m and --mysql-password/-p must be specified together or not at all\n"
+    if ($mysql_password and not $myth_import) or (not $mysql_password and $myth_import);
 
 umask 0007 if $group; # umask 0007 leaves group write bit on, good when using group chown() mode
 
@@ -290,6 +290,15 @@ sub ffmpegx {
 
     # When everythign goes ok, we should probably remove the ffmpeg logdump.
     close $log; unlink $logfile;
+}
+
+sub log {
+    return unless $logfile_fh;
+    my $level = shift;
+    return unless $level <= $level;
+
+    my $msg = shift; chomp $msg;
+    print $logfile_fh scalar(localtime), "[$$]: ", $msg, "\n";
 }
 
 __END__
