@@ -48,7 +48,6 @@ GetOptions(
     "channel|c=s"        => \$channel, 
     "description|d=s"    => \$description,
     "group|g=s"          => \$group,
-    "myth-import|m=i"    => sub { $myth_import = $_[1]; die "--myth-import(-m) can only be set to 1 or 2" },
     "name|n=s"           => \$name,
     "output-path|o=s"    => \$output_path,
     "mysql-password|p=s" => \$mysql_password,
@@ -63,11 +62,17 @@ GetOptions(
     "h"                  => sub { pod2usage() },
     "background|f"       => \$become_daemon,
     "logfile|l=s"        => \&setup_log,
+    "myth-import|m=i"    => sub {
+        $myth_import = $_[1];
+        
+        die "--myth-import(-m) can only be set to 1 or 2"
+            unless $_[1]==1 or $_[1]==2;
+    },
     "loglevel=i"         => sub {
         $loglevel=$_[1];
 
         die "loglevel must be between " . ERROR . " and " . DEBUG . " (inclusive)"
-            unless $_[1]>=ERROR and $_[1]<=DEBUG
+            unless $_[1]>=ERROR and $_[1]<=DEBUG;
     },
 
 ) or pod2usage();
