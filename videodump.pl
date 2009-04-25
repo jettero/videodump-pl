@@ -98,22 +98,23 @@ if( $become_daemon ) {
 #lock the source and make sure it isn't currently being used
 open my $lockfile_fh, ">", $lockfile or die "error opening lockfile \"$lockfile\": $!";
 while( not flock $lockfile_fh, (LOCK_EX|LOCK_NB) ) {
+    # warnings are automatically logged
     warn "couldn't lock lockfile \"$lockfile,\" waiting for a turn...\n";
     sleep 5;
+}
+
+sub change_channel {
+    my($channel_digit) = @_;
+
+    #some set top boxes need to be woken up
+    systemx ("irsend", "SEND_ONCE", $remote, $channel_digit);
+    sleep 0.2; # channel change speed, 1 sec is too long, some boxes may timeout
 }
 
 # now lets change the channel, now compatable with up to 4 digits
 unless( $skip_irsend ) {
     systemx ("irsend", "SEND_ONCE", $remote, "SELECT"); # needs to be outside of sub change_channel
     sleep 1; # give it a second to wake up before sending the digits
-
-    sub change_channel {
-        my($channel_digit) = @_;
-
-    #some set top boxes need to be woken up
-        systemx ("irsend", "SEND_ONCE", $remote, $channel_digit);
-        sleep 0.2; # channel change speed, 1 sec is too long, some boxes may timeout
-    }
 
     sleep 1;
 
