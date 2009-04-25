@@ -243,15 +243,6 @@ sub ffmpegx {
     my $pid = open3($output_filehandle, $stdout, $stderr, ffmpeg=>@cmd);
     close $output_filehandle;
 
-    if( $group ) {
-        if( my $gid = getgrnam($group) ) {
-            chown $<, $gid, $file or warn "couldn't change group of output file: $!";
-
-        } else {
-            warn "couldn't locate group \"$group\"\n";
-        }
-    }
-
     print $log localtime() . "(0): $_" while <$stdout>;
 
     # NOTE: from manpage, "If CHLD_ERR is false, or the same file descriptor as
@@ -266,6 +257,16 @@ sub ffmpegx {
         move($file, "$file-err"); # if this fails, it doesn't really matter
         die "ffmpeg error, see tmp error log dump (/tmp/$name.log) for further information, video moved to: $file-err\n";
     }
+
+    if( $group ) {
+        if( my $gid = getgrnam($group) ) {
+            chown $<, $gid, $file or warn "couldn't change group of output file: $!";
+
+        } else {
+            warn "couldn't locate group \"$group\"\n";
+        }
+    }
+
 }
 
 __END__
