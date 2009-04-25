@@ -83,7 +83,6 @@ while( not flock $lockfile_fh, (LOCK_EX|LOCK_NB) ) {
     warn "couldn't lock lockfile \"$lockfile,\" waiting for a turn...\n";
     sleep 5;
 }
-open my $output, ">", $output_filename or die "error opening output file \"$output_filename\": $!";
 
 # now lets change the channel, now compatable with up to 4 digits
 unless( $skip_irsend ) {
