@@ -16,7 +16,7 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.51";
+our $VERSION = "1.52";
 
 my %o;
 
@@ -216,7 +216,7 @@ if( defined $myth_import ) {
 }
 
 # some database cleanup only if there are files that exist without entries or entries that exist without files
-#systemx("myth.find_orphans.pl", "--dodbdelete", "--pass", $mysql_password);
+#systemx("myth.find_orphans.pl", "--dodbdelete", "--dodelete", "--pass", $mysql_password);
 
 use Carp;
 sub systemx {
