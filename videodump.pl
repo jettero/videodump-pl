@@ -18,7 +18,7 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.52";
+our $VERSION = "1.60";
 
 my $lockfile       = "/tmp/.vd-pl.lock";
 my $channel        = "";
@@ -94,7 +94,6 @@ if( $become_daemon ) {
 }
 
 
-
 #lock the source and make sure it isn't currently being used
 open my $lockfile_fh, ">", $lockfile or die "error opening lockfile \"$lockfile\": $!";
 while( not flock $lockfile_fh, (LOCK_EX|LOCK_NB) ) {
@@ -136,7 +135,7 @@ unless( $skip_irsend ) {
         change_channel(substr($channel, 0, 1));
     }
 
-    # may or may not need to send the ENTER command after the channel numbers are sent
+    # may or may not need to send the SELECT command after the channel numbers are sent
     # remove comment from next line if necessary, may need to try OK or ENTER instead of SELECT.
     #systemx ("irsend SEND_ONCE $remote SELECT");
 }
@@ -188,7 +187,7 @@ if( defined $myth_import ) {
             # this may not be the best way to do it
             # first optimize database, the script is going to need 755 perms or something similar
             # NOTE: script won't need 755 if you fork and use $^X
-            # Originally located at /usr/share/doc/mythtv-backend/contrib/
+            # Original is located at /usr/share/doc/mythtv-backend/contrib/
             # You will need to untar and place in your path.
             #systemx($^X,"optimize_mythdb.pl");
 
@@ -215,14 +214,6 @@ if( defined $myth_import ) {
         "--answer", "y", "--answer", $channel, "--answer", $name, "--answer", $subtitle, 
         "--answer", $description, "--answer", $start_time, "--answer", "Default", 
         "--answer", ($show_length)/60, "--answer", "y");
-
-    # to be sure the recorded file plays well, lets do a (non-reencoding) transcode of the file
-    # XXX: we do this after import in any import mode?  is that right?  Should it go before the import?
-    # The import changes the file name, so if transcode is done after the import, this command is slightly different
-    # Not sure if it should be before or after.
-#    systemx('mythtranscode', 
-#        "--mpeg2", "--buildindex", "--allkeys", "--showprogress", "--infile", 
-#        "$output_path/$channel\_$commflag_name.$file_ext");
 
     # Now let's flag the commercials
     # It doesn't look like "real-time flagging" can be done.
