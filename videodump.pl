@@ -139,6 +139,8 @@ ffmpegx(
 
 $output_filename);
 
+close $lockfile_fh; # release the video device for the next recording process.
+
 # now let's import it into the mythtv database
 # XXX: I reordered this to make a smarter flow, and altered the -m docs to match
 if( defined $myth_import ) {
