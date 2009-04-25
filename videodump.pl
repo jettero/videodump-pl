@@ -24,14 +24,14 @@ my $description    = "imported by HD PVR videodump & myth.rebuilddatabase.pl";
 my $group          = "mythtv";
 my $myth_import;
 my $name           = "manual_record";
-my $output_path    = '/var/lib/mythtv/videos/'; # this should be the default gallery folde,
+my $output_path    = '/var/lib/mythtv/videos/';
 my $mysql_password;
 my $remote         = "dish";
 my $subtitle       = "recorded by HD PVR videodump";
 my $show_length    = 1800;
 my $buffer_time    = 7;
 my $video_device   = '/dev/video0';
-my $file_ext       = "mp4"; # internal player plays the default well, MP4 and TS seem to play well with internal player.  MP4 converts to MPG better.  External players play MP4 well.
+my $file_ext       = "mp4";
 my $skip_irsend;
 my $become_daemon;
 
@@ -309,124 +309,128 @@ with any hardware (/dev/video*) type device that dumps a video/audio stream.
 
  videodump.pl
     -h help
-    -H full help
+    --help (-H) full help
 
-    -b buffer/recovery time
-    -c channel
-    -d show description
-    -f fork/daemonize
-    -g group
-    -L lockfile
-    -m mythtv mysql import option (requires -p)
-    -n show name
-    -o output path
-    -p mysql password (may require -o and/or -m)
-    -r remote device
-    -s subtitle description
-    -t minutes (default 30)
-    -v video device (default /dev/video0)
-    -x file extension (default ts)
-    -I skip irsend commands
+    --buffer-time  (-b) buffer/recovery time
+    --channel      (-c) channel
+    --description  (-d) show description
+    --background   (-f) fork/daemonize
+    --group        (-g) group
+    --lockfile     (-L) lockfile
+    --myth-import  (-m) mythtv mysql import option (requires -p)
+    --name         (-n) show name
+    --output-path  (-o) output path
+    --mysql-passwd (-p) mysql password (may require -o and/or -m)
+    --remote       (-r) remote device
+    --subtitle     (-s) subtitle description
+    --show-length  (-t) length in minutes (default: 30 minutes)
+    --video-device (-v) video device (default: /dev/video0)
+    --file-ext     (-x) file extension (default: ts), alters ffmpeg behavior
+    --skip-irsend  (-I) skip irsend commands
 
 =head1 OPTIONS
 
 =over
 
-=item B<-b>
+=item B<-b> B<--buffer-time>
 
 buffer/recovery time in seconds needed between recordings to reset for next
 show default 1 second per 1 minute of recording time
 
-=item B<-c>
+=item B<-c> B<--channel>
 
 channel, (default is nothing, just record whatever is on at the time)
 
-=item B<-d>
+=item B<-d> B<--description>
 
 description detail (default imported by HD PVR)
 
-=item B<-f>
+=item B<-f> B<--background>
 
 fork/daemonize (fork/detatch and run in background)
 
-=item B<-g>
+=item B<-g> B<--group>
 
 group to chgroup files to after running ffmpeg (default: mythtv if it exists,
 '0' to disable)
 
-=item B<-L>
+=item B<-L> B<--lockfile>
 
 lockfile location (default: /tmp/.vd-pl.lock)
 
-=item B<-m>
+=item B<-m> B<--mysql-import>
 
 mysql import type 1 and 2 requires -p
 
-When -m isn't specified, this script simply does a raw dump to output folder
-(-o).  Recording will be available for manual play as soon as recording starts,
-will NOT show up in mythtv mysql "recorded shows" list, best dumped to default
-MythVideo Gallery folder.
+When --mysql-import(-m) isn't specified, this script simply does a raw dump to
+output folder (--output-path/-o).  Recording will be available for manual play
+as soon as recording starts, will NOT show up in mythtv mysql "recorded shows"
+list, best dumped to default MythVideo Gallery folder.
 
 =over
 
 =item B<1>
 
-The output folder (-o) must be where mythtv recordings are stored by default.
-Shows will be imported into mysql imediately after they are done recording in
-raw format.  Requires mysql password (-p) switch!
+The output folder (output-path/-o) must be where mythtv recordings are stored
+by default.  Shows will be imported into mysql imediately after they are done
+recording in raw format.  Requires mysql password (--mysql-passwd/-p) switch!
 
 =item B<2>
 
 Same as 1, but shows will be converted to mythtv native mpeg2 format with
 commercial flagging points.  They will also show up in the recorded shows list
 after mpeg2 conversion (time will vary based on CPU).  Requires mysql password
-(-p) switch.
+(--mysql-passwd/-p) switch.
 
 =back
 
-=item B<-n>
+=item B<-n> B<--name>
 
-name of file, also used as title (default manual_record)
+name of file, also used as title (default: manual_record)
 
-=item B<-o>
+=item B<-o> B<--output-path>
 
 output path where you want shows to be placed needs / at end (default
 /var/lib/mythtv/videos/)
 
-=item B<-p>
+=item B<-p> B<--mysql-passwd>
 
 mysql password, default is blank.  If you supply a password, will attempt to
 import into MythTV mysql!  Found in Frontend -> Utilities/Setup->Setup->General
 You need supply -o, which needs to be the path to your MythTV recorded shows folder.
 You should use -m (1 or 2).  If -m switch is not used, (-m 1) is assumed.
 
-=item B<-r>
+=item B<-r> B<--remote>
 
 remote device to be controled by IR transmitter, change in MythTV Control
 Centre, look at /etc/lircd.conf for the chosen device blaster file that
 contains the name to use here (default dish)
 
-=item B<-s>
+=item B<-s> B<--subtitle>
 
-subtitle description (default recorded by HD PVR)
+subtitle description (default: recorded by HD PVR)
 
-=item B<-t>
+=item B<-t> B<--show-length>
 
-minutes (default 30)
+The length of a show in minutes (default: 30 minutes)
 
-=item B<-v>
+=item B<-v> B<--video-device>
 
-video device (default /dev/video0)
+The device or video file you wish to record from or process (default: /dev/video0)
 
-=item B<-x>
+=item B<-x> B<--file-ext>
 
-file extension (default ts, ts gives mpeg-ts container to match mythtv's
-container, will change to mpg after re-encoding video)
+The file extension to be passed to ffmpeg.  The extension alters the behavior of
+ffmpeg by changing the container format of the output!
 
-=item B<-I>
+The myth internal player plays the default (mp4) well. ts containers seem to
+play well also.  mp4 converts to better mpeg2 output.  External players play mp4
+well, but possibly not ts.
 
-Skip all irsend commands.  These commands are intended to change
-channels and things, which may not be applicable to all users.
+=item B<-I> B<--skip-irsend>
+
+Skip all irsend commands.  These commands are intended to change channels and
+things, which may not be applicable or useful to all users.
 
 =back
 
@@ -438,7 +442,9 @@ GPL
 
 =head1 REPORTING BUGS
 
-C<http://groups.google.com/group/videodump-pl>
+Please use the issue tracker at github:
+
+C<http://github.com/jettero/videodump-pl/issues>
 
 =head1 REPOSITORY
 
