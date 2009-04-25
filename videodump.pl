@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 
-use constant { ERROR => 0, INFO => 1, DEBUG => 2 };
+use constant { ERROR => 0, ACTION=> 1, INFO => 2, DEBUG => 3 };
 
 use Fcntl qw(:flock);
 use Getopt::Long;
@@ -45,8 +45,6 @@ Getopt::Long::Configure("bundling"); # make switches case sensitive (and turn on
 # getopts("HhIfb:c:d:g:L:m:n:o:p:r:s:t:v:x:", \%o) or pod2usage();
 GetOptions(
     "lockfile|L=s"       => \$lockfile, 
-    "logfile|l=s"        => \&setup_log,
-    "loglevel=i"         => sub { $loglevel=$_[1]; die "loglevel must be between 0 and 2 (inclusive)" unless $_[1]>=ERROR and $_[1]<=DEBUG },
     "channel|c=s"        => \$channel, 
     "description|d=s"    => \$description,
     "group|g=s"          => \$group,
@@ -64,6 +62,13 @@ GetOptions(
     "help|H"             => sub { pod2usage(-verbose=>1) },
     "h"                  => sub { pod2usage() },
     "background|f"       => \$become_daemon,
+    "logfile|l=s"        => \&setup_log,
+    "loglevel=i"         => sub {
+        $loglevel=$_[1];
+
+        die "loglevel must be between " . ERROR . " and " . DEBUG . " (inclusive)"
+            unless $_[1]>=ERROR and $_[1]<=DEBUG
+    },
 
 ) or pod2usage();
 
@@ -328,7 +333,7 @@ with any hardware (/dev/video*) type device that dumps a video/audio stream.
     --group        (-g) group
     --lockfile     (-L) lockfile
     --logfile      (-l) logfile (no logging unless specified)
-    --loglevel          0,1,2 - default: 1
+    --loglevel          0-3 - default: 2
     --myth-import  (-m) mythtv mysql import option (requires -p)
     --name         (-n) show name
     --output-path  (-o) output path
@@ -443,6 +448,36 @@ well, but possibly not ts.
 
 Skip all irsend commands.  These commands are intended to change channels and
 things, which may not be applicable or useful to all users.
+
+=item B<-l> B<--logfile>
+
+If specified, the program will putput whatever it's doing to the file specified.
+It will write the details in append mode.  By default, no logging is performed.
+
+=item B<--loglevel>
+
+By default, this application logs quite a bit of useful information, perhaps too
+much (default: 2).  The following enumerates the loglevels:
+
+=over
+
+=item 0 - ERROR
+
+log only errors
+
+=item 1 - ACTION
+
+log ffmpeg commands
+
+=item 2 - INFO
+
+log other interesting things (default)
+
+=item 3 - DEBUG
+
+log every silly little thing
+
+=back
 
 =back
 
