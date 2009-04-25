@@ -6,7 +6,7 @@ use strict;
 use warnings;
 
 use Fcntl qw(:flock);
-use Getopt::Std;
+use Getopt::Long;
 use POSIX qw(setsid strftime);
 use File::Spec;
 use File::Basename;
@@ -18,28 +18,46 @@ use Pod::Usage;
 
 our $VERSION = "1.51";
 
-my %o;
+my $lockfile       = "/tmp/.vd-pl.lock";
+my $channel        = "";
+my $description    = "imported by HD PVR videodump & myth.rebuilddatabase.pl";
+my $group          = "mythtv";
+my $myth_import;
+my $name           = "manual_record";
+my $output_path    = '/var/lib/mythtv/videos/'; # this should be the default gallery folde,
+my $mysql_password;
+my $remote         = "dish";
+my $subtitle       = "recorded by HD PVR videodump";
+my $show_length    = 1800;
+my $buffer_time    = 7;
+my $video_device   = '/dev/video0';
+my $file_ext       = "mp4"; # internal player plays the default well, MP4 and TS seem to play well with internal player.  MP4 converts to MPG better.  External players play MP4 well.
+my $skip_irsend;
+my $become_daemon;
 
-getopts("HhIfb:c:d:g:L:m:n:o:p:r:s:t:v:x:", \%o) or pod2usage();
-pod2usage() if $o{h};
-pod2usage(-verbose=>1) if $o{H};
+Getopt::Long::Configure("bundling"); # make switches case sensitive (and turn on bundling)
+# getopts("HhIfb:c:d:g:L:m:n:o:p:r:s:t:v:x:", \%o) or pod2usage();
+GetOptions(
+    "lockfile|L=s"       => \$lockfile, 
+    "channel|c=s"        => \$channel, 
+    "description|d=s"    => \$description,
+    "group|g=s"          => \$group,
+    "myth-import|m=i"    => sub { $myth_import = $_[1]; die "--myth-import(-m) can only be set to 1 or 2" },
+    "name|n=s"           => \$name,
+    "output-path|o=s"    => \$output_path,
+    "mysql-password|p=s" => \$mysql_password,
+    "remote|r=s"         => \$remote,
+    "subtitle|s=s"       => \$subtitle,
+    "show-length|t=i"    => sub { $show_length = $_[1]*60 }, # convert minutes to seconds
+    "buffer-time|b=i"    => \$buffer_time,
+    "video-device|v=s"   => \$video_device,
+    "file-ext|x=s"       => \$file_ext,
+    "skip-irsend|I"      => \$skip_irsend,
+    "help|H"             => sub { pod2usage(-verbose=>1) },
+    "h"                  => sub { pod2usage() },
+    "background|f"       => \$become_daemon,
 
-my $lockfile       = $o{L} || "/tmp/.vd-pl.lock";
-my $channel        = $o{c} || "";
-my $description    = $o{d} || "imported by HD PVR videodump & myth.rebuilddatabase.pl";
-my $group          = $o{g} || "mythtv";
-my $myth_import    = $o{m}; # allows for different levels of importing into mythtv, see help file for details
-my $name           = $o{n} || "manual_record";
-my $output_path    = $o{o} || '/var/lib/mythtv/videos/'; # this should be your default gallery folder, you may want to change this to your MythTV recorded shows folder if you use -p
-my $mysql_password = $o{p}; # xfPbTC5xgx
-my $remote         = $o{r} || "dish";
-my $subtitle       = $o{s} || "recorded by HD PVR videodump";
-my $show_length    = ($o{t} || 30)*60; # convert time to minutes
-my $buffer_time    = $o{b} || 7; # subtract a few seconds from show length to give unit time to recover for next recording if one immediately follows
-my $video_device   = $o{v} || '/dev/video0';
-my $file_ext       = $o{x} || "mp4"; # internal player plays the default well, MP4 and TS seem to play well with internal player.  MP4 converts to MPG better.  External players play MP4 well.
-my $skip_irsend    = $o{I};
-
+) or pod2usage();
 
 if ($show_length - $buffer_time <= 0 ) {
     die "Come on, you need to record for longer than that!: $!"; # $show_length - $buffer_time must be greater than zero seconds
@@ -68,7 +86,7 @@ my $commflag_name   = strftime('%y%m%d%H%M%S', localtime); # needed so we can co
 my $output_basename = basename("$name $start_time_name $channel.$file_ext"); # filename includes date, time and channel, colons can cause issues ouside of linux
 my $output_filename = File::Spec->rel2abs( File::Spec->catfile($output_path, $output_basename) );
 
-if( $o{f} ) {
+if( $become_daemon ) {
     # fork/daemonize -- copied from http://www.webreference.com/perl/tutorial/9/3.html
     defined(my $pid = fork) or die "can't fork: $!";
     exit if $pid;
@@ -194,7 +212,7 @@ if( defined $myth_import ) {
     # import into MythTV mysql database so it is listed with all your other recorded shows
     systemx("myth.rebuilddatabase.pl",
         "--dbhost", "localhost", "--pass", $mysql_password, "--dir", $output_path, "--file", $output_basename, 
-        "--answer", "y", "--answer", $channel, "--answer", $o{n}, "--answer", $subtitle, 
+        "--answer", "y", "--answer", $channel, "--answer", $name, "--answer", $subtitle, 
         "--answer", $description, "--answer", $start_time, "--answer", "Default", 
         "--answer", ($show_length)/60, "--answer", "y");
 
