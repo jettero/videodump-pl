@@ -64,7 +64,7 @@ GetOptions(
     "logfile|l=s"        => \&setup_log,
     "myth-import|m=i"    => sub {
         $myth_import = $_[1];
-        
+
         die "--myth-import(-m) can only be set to 1 or 2"
             unless $_[1]==1 or $_[1]==2;
     },
