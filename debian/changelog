@@ -1,3 +1,13 @@
+videodump-pl (1.60-1) unstable; urgency=low
+
+  * we fixed a lot of bugs
+  * cleaned up the docs
+  * more mature IPC
+  * logging
+  * better switch processing
+
+ -- Paul Miller <jettero@cpan.org>  Fri, 17 Apr 2009 22:34:00 -0500
+
 videodump-pl (1.43-1) unstable; urgency=low
 
   * we fixed a lot of bugs
