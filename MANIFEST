@@ -1,0 +1,12 @@
+build-deb.sh
+debian/changelog
+debian/compat
+debian/control
+debian/copyright
+debian/dirs
+debian/rules
+LICENSE
+Makefile.PL
+MANIFEST
+README
+videodump.pl
