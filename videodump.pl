@@ -496,11 +496,11 @@ GPL
 
 Please use the issue tracker at github:
 
-C<http://github.com/jettero/videodump-pl/issues>
+L<http://github.com/jettero/videodump-pl/issues>
 
 =head1 REPOSITORY
 
-C<http://github.com/jettero/videodump-pl>
+L<http://github.com/jettero/videodump-pl>
 
 =head1 SEE ALSO
 
