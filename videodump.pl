@@ -18,7 +18,7 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.60";
+our $VERSION = "1.61";
 
 my $lockfile       = "/tmp/.vd-pl.lock";
 my $channel        = "";
@@ -28,12 +28,12 @@ my $name           = "manual_record";
 my $output_path    = '/var/lib/mythtv/videos/';
 my $remote         = "dish";
 my $subtitle       = "recorded by HD PVR videodump";
-my $show_length    = 1800;
-my $buffer_time    = 7;
+my $show_length    = 1800;# seconds
+my $buffer_time    = 7; # seconds, gives time for unit to get ready for a subsequent recording
 my $video_device   = '/dev/video0';
-my $file_ext       = "mp4";
+my $file_ext       = "mp4";# ts is also playable by the internal mythtv player
 my $loglevel       = INFO;
-my $mysql_password;
+my $mysql_password; #xfPbTC5xgx
 my $myth_import;
 my $skip_irsend;
 my $become_daemon;
@@ -53,7 +53,7 @@ GetOptions(
     "mysql-password|p=s" => \$mysql_password,
     "remote|r=s"         => \$remote,
     "subtitle|s=s"       => \$subtitle,
-    "show-length|t=i"    => sub { $show_length = $_[1]*60 }, # convert minutes to seconds
+    "show-length|t=f"    => sub { $show_length = $_[1]*60 }, # convert minutes to seconds, floating variable, so partial minutes can be used
     "buffer-time|b=i"    => \$buffer_time,
     "video-device|v=s"   => \$video_device,
     "file-ext|x=s"       => \$file_ext,
@@ -165,6 +165,7 @@ ffmpegx(
     "-i"      => $video_device,               # the input device
     "-vcodec" => "copy",                      # copy the video codec without transcoding, probably asking to much to call a specific encoder for real time capture
     "-acodec" => "copy",                      # what do you know, AAC is playable by default by the internal myth player
+    "-alang"  => "eng",                       # mythtv inserts it, so will we
     "-t"      => $show_length-$buffer_time,   # -t record for this many seconds ... $o{t} was multiplied by 60 and is in minutes....minus buffer/recovery time
 
 $output_filename);
@@ -185,7 +186,7 @@ if( defined $myth_import ) {
             ffmpegx(
 
                  "-i" => $output_filename,
-                 "-acodec" => "ac3", "-ab" => "192k",
+                 "-acodec" => "ac3", "-ab" => "192k", "-alang"  => "eng",
                  "-vcodec" => "mpeg2video", "-b" => "10.0M", "-cmp" => 2, "-subcmp" => 2,
                  "-mbd" => 2, "-trellis" => 1, $transcode_filename);
 
@@ -221,6 +222,8 @@ if( defined $myth_import ) {
     systemx('mythtranscode', 
         "--mpeg2", "--buildindex", "--allkeys", "--showprogress", "--infile", 
         "$output_path/$output_basename");
+
+$description = $description . " " . $file_ext;
 
     # import into MythTV mysql database so it is listed with all your other recorded shows
     systemx("myth.rebuilddatabase.pl",
@@ -496,11 +499,11 @@ GPL
 
 Please use the issue tracker at github:
 
-C<http://github.com/jettero/videodump-pl/issues>
+L<http://github.com/jettero/videodump-pl/issues>
 
 =head1 REPOSITORY
 
-C<http://github.com/jettero/videodump-pl>
+L<http://github.com/jettero/videodump-pl>
 
 =head1 SEE ALSO
 
