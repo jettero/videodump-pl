@@ -18,7 +18,7 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.61";
+our $VERSION = "1.62";
 
 my $lockfile       = "/tmp/.vd-pl.lock";
 my $channel        = "";
@@ -223,7 +223,7 @@ if( defined $myth_import ) {
         "--mpeg2", "--buildindex", "--allkeys", "--showprogress", "--infile", 
         "$output_path/$output_basename");
 
-$description = $description . " " . $file_ext;
+$description = $description . "\n" . $file_ext;
 
     # import into MythTV mysql database so it is listed with all your other recorded shows
     systemx("myth.rebuilddatabase.pl",
