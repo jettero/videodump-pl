@@ -110,10 +110,19 @@ if( $become_daemon ) {
 
 #lock the source and make sure it isn't currently being used
 open my $lockfile_fh, ">", $lockfile or die "error opening lockfile \"$lockfile\": $!";
-while( not flock $lockfile_fh, (LOCK_EX|LOCK_NB) ) {
-    # warnings are automatically logged
-    warn "couldn't lock lockfile \"$lockfile,\" waiting for a turn...\n";
-    sleep 5;
+LOCKING: {
+    my $wait_time = time;
+    while( not flock $lockfile_fh, (LOCK_EX|LOCK_NB) ) {
+        # warnings are automatically logged
+        warn "couldn't lock lockfile \"$lockfile,\" waiting for a turn...\n";
+        sleep 5;
+    }
+
+    my $delta_t = time - $wait_time;
+    $show_length -= $delta_t;
+
+    die "show-length reduced by $delta_t seconds because of long wait time,\n\tshow-length ($show_length seconds) now too short to continue\n"
+        if $show_length - $buffer_time <= 0;
 }
 logmsg(INFO, "locked video device (actually $lockfile)");
 
