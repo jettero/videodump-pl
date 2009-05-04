@@ -18,7 +18,7 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.63";
+our $VERSION = "1.64";
 
 my $lockfile       = "/tmp/.vd-pl.lock";
 my $channel        = "";
@@ -122,7 +122,9 @@ LOCKING: {
     $show_length -= $delta_t;
 
 #new start time if there was a need to wait for a previous recording to finish
-# $start_time = $wait_time
+# probably an if/then statement or this may need to be moved to the appropriate location
+# $start_time = $wait_time;
+#$description = $description . "\n" . "delayed by " . "X" . " minutes " . "X" . " seconds";
 
     die "show-length reduced by $delta_t seconds because of long wait time,\n\tshow-length ($show_length seconds) now too short to continue\n"
         if $show_length - $buffer_time <= 0;
