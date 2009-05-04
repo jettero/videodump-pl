@@ -2,3 +2,4 @@
 ^gpl-3.0.txt.gz
 ^MANIFEST.SKIP
 ^.pm-desc.html
+^.st$
