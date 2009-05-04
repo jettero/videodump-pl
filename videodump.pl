@@ -9,7 +9,7 @@ use constant { ERROR => 0, ACTION=> 1, INFO => 2, DEBUG => 3 };
 
 use Fcntl qw(:flock);
 use Getopt::Long;
-use POSIX qw(setsid strftime);
+use POSIX qw(setsid strftime floor);
 use File::Spec;
 use File::Basename;
 use IPC::Open3;
@@ -121,10 +121,12 @@ LOCKING: {
     my $delta_t = time - $wait_time;
     $show_length -= $delta_t;
 
-#new start time if there was a need to wait for a previous recording to finish
-# probably an if/then statement or this may need to be moved to the appropriate location
-# $start_time = $wait_time;
-#$description = $description . "\n" . "delayed by " . "X" . " minutes " . "X" . " seconds";
+    # re-write start time and description
+    $start_time  = strftime('%y-%m-%d %H:%M:%S', localtime);
+
+    my $dm = floor($delta_t/60);
+    my $ds = $delta_t - $dm;
+    $description = $description . "\n" . "delayed by $dm minutes $ds seconds";
 
     die "show-length reduced by $delta_t seconds because of long wait time,\n\tshow-length ($show_length seconds) now too short to continue\n"
         if $show_length - $buffer_time <= 0;
