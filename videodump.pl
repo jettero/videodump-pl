@@ -125,8 +125,8 @@ LOCKING: {
     $start_time  = strftime('%y-%m-%d %H:%M:%S', localtime);
 
     my $dm = floor($delta_t/60);
-    my $ds = $delta_t - $dm;
-    $description = $description . "\n" . "delayed by $dm minutes " . '$ds-$dm/60' . " seconds";
+    my $ds = $delta_t - (60*$dm);
+    $description = $description . "\n" . "delayed by $dm minutes $ds seconds";
 
     die "show-length reduced by $delta_t seconds because of long wait time,\n\tshow-length ($show_length seconds) now too short to continue\n"
         if $show_length - $buffer_time <= 0;
