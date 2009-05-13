@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 
-use constant { ERROR => 0, ACTION=> 1, INFO => 2, DEBUG => 3 };
+use constant { ERROR => 0, ACTION=> 1, INFO => 2, DEBUG => 3, WITCHHUNT=>4, MAXLOG=>4 };
 
 use Fcntl qw(:flock);
 use Getopt::Long;
@@ -68,11 +68,11 @@ GetOptions(
         die "--myth-import(-m) can only be set to 1 or 2"
             unless $_[1]==1 or $_[1]==2;
     },
-    "loglevel=i"         => sub {
+    "loglevel=i" => sub {
         $loglevel=$_[1];
 
-        die "loglevel must be between " . ERROR . " and " . DEBUG . " (inclusive)"
-            unless $_[1]>=ERROR and $_[1]<=DEBUG;
+        die "loglevel must be between " . ERROR . " and " . MAXLOG . " (inclusive)"
+            unless $_[1]>=ERROR and $_[1]<=MAXLOG;
     },
 
 ) or pod2usage();
@@ -264,9 +264,16 @@ $description = $description . "\n" . $file_ext;
 
 use Carp;
 sub systemx {
+    my $evil_name = "$output_filename.tmp"; # WITCHHUNT
+    my $evil_exists = -f $evil_name;        # WITCHHUNT
+
     # stolen from IPC::System::Simple (partially)
     my $command = shift;
     CORE::system { $command } $command, @_;
+
+    if( not $evil_exists and -f $evil_exists ) {                                                       # WITCHHUNT
+        logmsg(WITCHHUNT, "evil file: $evil_name did not exist before '$command @_', but does now!!"); # WITCHHUNT
+    }                                                                                                  # WITCHHUNT
 
     croak "child process failed to execute" if $? == -1;
     croak "child process returned error status" if $? != 0;
