@@ -271,7 +271,7 @@ sub systemx {
     my $command = shift;
     CORE::system { $command } $command, @_;
 
-    if( not $evil_exists and -f $evil_exists ) {                                                       # WITCHHUNT
+    if( not $evil_exists and -f $evil_name ) {                                                         # WITCHHUNT
         logmsg(WITCHHUNT, "evil file: $evil_name did not exist before '$command @_', but does now!!"); # WITCHHUNT
     }                                                                                                  # WITCHHUNT
 
