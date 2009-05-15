@@ -18,7 +18,7 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.65";
+our $VERSION = "1.66";
 
 my $lockfile       = "/tmp/.vd-pl.lock";
 my $channel        = "";
@@ -236,9 +236,9 @@ if( defined $myth_import ) {
     # /usr/share/doc/mythtv-backend/contrib/myth.rebuilddatabase.pl.gz
 
     # to be sure the recorded file plays well, lets do a (non-reencoding) transcode of the file
-    systemx('mythtranscode', 
-        "--mpeg2", "--buildindex", "--allkeys", "--showprogress", "--infile", 
-        "$output_path/$output_basename");
+#    systemx('mythtranscode', 
+#        "--mpeg2", "--buildindex", "--allkeys", "--showprogress", "--infile", 
+#        "$output_path/$output_basename");
 
 $description = $description . "\n" . $file_ext;
 
