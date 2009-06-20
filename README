@@ -8,11 +8,17 @@ Limitations:
 1) You may have play around with the video players to see which one plays
 the files best for you.  Depending on what extra options you set, your
 player may choke on it  Try all the different players:
-(INTERNAL vs VLC vs MPLAYER vs XINE vs ???).  Internal seems to do just fine.
+(INTERNAL vs VLC vs MPLAYER vs XINE vs ???).  Internal seems to do just fine
+in most cases.
 
 2) Must schedule the recording manually or with a cron job in /etc/crontab
 (which is what I do).  Yeah, a cron job is a pain, but for my weekly/daily
-shows, all I do is set it once and it's done.  No channel guide integration yet.
+shows, all I do is set it once and it's done.  No channel guide integration.
+
+3) Apparently, using the stereo RCA audio input makes the HDPVR ouput AAC.  
+However, if you use spdif optical audio input, the unit defaults to AC3.  
+AC3 seems to give problems with certain containers (mp4 ?).  However, this may 
+be a problem with ffmpeg, so you may want to try a new version.
 
 What it does do:
 
