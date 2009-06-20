@@ -18,7 +18,7 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.66";
+our $VERSION = "1.67";
 
 my $lockfile       = "/tmp/.vd-pl.lock";
 my $channel        = "";
@@ -181,7 +181,7 @@ ffmpegx(
     "-y",                                     # it's ok to overwrite the output file
     "-i"      => $video_device,               # the input device
     "-vcodec" => "copy",                      # copy the video codec without transcoding, probably asking to much to call a specific encoder for real time capture
-    "-acodec" => "copy",                      # what do you know, AAC is playable by default by the internal myth player
+    "-acodec" => "copy",                      # if using HDPVR stereo RCA (hardware defalt to AAC) this can be uncommented, if using optical SPDIF (hardware default to AC3) leave commented and no mp4 otherwise will give issues
     "-alang"  => "eng",                       # mythtv inserts it, so will we
     "-t"      => $show_length-$buffer_time,   # -t record for this many seconds ... $o{t} was multiplied by 60 and is in minutes....minus buffer/recovery time
 
@@ -203,9 +203,12 @@ if( defined $myth_import ) {
             ffmpegx(
 
                  "-i" => $output_filename,
-                 "-acodec" => "ac3", "-ab" => "192k", "-alang"  => "eng",
+                 "-acodec" => "ac3", "-ab" => "160k", "-alang"  => "eng",
                  "-vcodec" => "mpeg2video", "-b" => "10.0M", "-cmp" => 2, "-subcmp" => 2,
                  "-mbd" => 2, "-trellis" => 1, $transcode_filename);
+
+            # this would also work
+            # ffmpeg -i $output_filename -vcodec mpeg2video -f dvd -b 8000k -r 30000/1001 -acodec ac3 -ab 160k $transcode_filename
 
             # probably need a command here to delete the original if the conversion was sucessfull???
             # if, then, type of command, but not sure how to tell if it converted sucessfully
@@ -307,6 +310,8 @@ sub ffmpegx {
         die "ffmpeg exit error, video moved to: $file-err\n";
     }
 
+#chmod 664,$file;# sometimes the file is only 660 and cannot be accessed from other sources
+
     if( $group ) {
         if( my $gid = getgrnam($group) ) {
             chown $<, $gid, $file or warn "couldn't change group (to $gid) of output file ($file): $!";
@@ -374,7 +379,7 @@ with any hardware (/dev/video*) type device that dumps a video/audio stream.
     --subtitle     (-s) subtitle description
     --show-length  (-t) length in minutes (default: 30 minutes)
     --video-device (-v) video device (default: /dev/video0)
-    --file-ext     (-x) file extension (default: ts), alters ffmpeg behavior
+    --file-ext     (-x) file extension (default: mp4), alters ffmpeg behavior
     --skip-irsend  (-I) skip irsend commands
 
 =head1 OPTIONS
