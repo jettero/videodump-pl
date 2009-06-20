@@ -267,16 +267,9 @@ $description = $description . "\n" . $file_ext;
 
 use Carp;
 sub systemx {
-    my $evil_name = "$output_filename.tmp"; # WITCHHUNT
-    my $evil_exists = -f $evil_name;        # WITCHHUNT
-
     # stolen from IPC::System::Simple (partially)
     my $command = shift;
     CORE::system { $command } $command, @_;
-
-    if( not $evil_exists and -f $evil_name ) {                                                         # WITCHHUNT
-        logmsg(WITCHHUNT, "evil file: $evil_name did not exist before '$command @_', but does now!!"); # WITCHHUNT
-    }                                                                                                  # WITCHHUNT
 
     croak "child process failed to execute" if $? == -1;
     croak "child process returned error status" if $? != 0;
