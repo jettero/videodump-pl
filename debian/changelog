@@ -1,3 +1,9 @@
+videodump-pl (1.67-1) stable
+
+  * Dave's been carefully tweaking and testing for months now.
+
+ -- Paul Miller <jettero@cpan.org>  Sun, 21 Jun 2009 08:16:00 -0500
+
 videodump-pl (1.60-1) unstable; urgency=low
 
   * we fixed a lot of bugs
