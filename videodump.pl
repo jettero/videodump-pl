@@ -18,7 +18,7 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.67";
+our $VERSION = "1.68";
 
 my $lockfile       = "/tmp/.vd-pl.lock";
 my $channel        = "";
@@ -28,8 +28,8 @@ my $name           = "manual_record";
 my $output_path    = '/var/lib/mythtv/videos/';
 my $remote         = "dish";
 my $subtitle       = "recorded by HD PVR videodump";
-my $show_length    = 1800;# seconds
-my $buffer_time    = 7; # seconds, gives time for unit to get ready for a subsequent recording
+my $show_length    = 1800;# in seconds...1800 seconds = 30 minutes by default
+my $buffer_time    = 7; # seconds, gives time for unit to get ready for a subsequent recording...i.e. 1800 seconds -7 seconds
 my $video_device   = '/dev/video0';
 my $file_ext       = "mp4";# ts is also playable by the internal mythtv player
 my $loglevel       = INFO;
@@ -303,7 +303,7 @@ sub ffmpegx {
         die "ffmpeg exit error, video moved to: $file-err\n";
     }
 
-#chmod 664,$file;# sometimes the file is only 660 and cannot be accessed from other sources
+chmod 0664,$file; # sometimes the file is only 0660 and cannot be accessed from other sources
 
     if( $group ) {
         if( my $gid = getgrnam($group) ) {
