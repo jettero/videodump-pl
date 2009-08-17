@@ -18,7 +18,7 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.69";
+our $VERSION = "1.69"; 
 
 my $lockfile       = "/tmp/.vd-pl.lock";
 my $channel        = "";
@@ -38,6 +38,7 @@ my $myth_import;
 my $skip_irsend;
 my $become_daemon;
 my $logfile_fh;
+my $queue_comm_flag;
 
 my @original_arguments = @ARGV;
 
@@ -193,7 +194,7 @@ close $lockfile_fh; # release the video device for the next recording process.
 
 # now let's import it into the mythtv database
 # XXX: I reordered this to make a smarter flow, and altered the -m docs to match
-if( defined $myth_import ) {
+if ( defined $myth_import ) {
     if ($myth_import == 2) {
         # -m 2 means we transcode to native format
         my $transcode_basename = $output_basename;
@@ -251,15 +252,15 @@ $description = $description . "\n" . $file_ext;
         "--dbhost", "localhost", "--pass", $mysql_password, "--dir", $output_path, "--file", $output_basename, 
         "--answer", "y", "--answer", $channel, "--answer", $name, "--answer", $subtitle, 
         "--answer", $description, "--answer", $start_time, "--answer", "Default", 
-        "--answer", ($show_length)/60, "--answer", "y");
+        "--answer", ($show_length)/60, "--answer", "n");
 
     # Now let's flag the commercials
     # It doesn't look like "real-time flagging" can be done.
     # This process takes longer than normal with the files created by the HDPVR.  This is something that should be figgured out at some point.
 
-	if( $queue_comm_flag ) {
 
-		systemx("mythcommflag","-f","$output_path/$channel\_$commflag_name.$file_ext");
+	if ( $queue_comm_flag ) {
+		#systemx("mythcommflag","-f","$output_path/$channel\_$commflag_name.$file_ext");
 
 		logmsg(DEBUG, "output_basename: $output_basename");
 		logmsg(DEBUG, "output_path: $output_path");
