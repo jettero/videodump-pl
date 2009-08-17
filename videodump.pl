@@ -18,7 +18,7 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.68";
+our $VERSION = "1.69";
 
 my $lockfile       = "/tmp/.vd-pl.lock";
 my $channel        = "";
@@ -42,7 +42,7 @@ my $logfile_fh;
 my @original_arguments = @ARGV;
 
 Getopt::Long::Configure("bundling"); # make switches case sensitive (and turn on bundling)
-# getopts("HhIfb:c:d:g:L:m:n:o:p:r:s:t:v:x:", \%o) or pod2usage();
+# getopts("HhIfb:c:d:g:L:l:m:n:o:p:q:r:s:t:v:x:", \%o) or pod2usage();
 GetOptions(
     "lockfile|L=s"       => \$lockfile, 
     "channel|c=s"        => \$channel, 
@@ -58,6 +58,7 @@ GetOptions(
     "video-device|v=s"   => \$video_device,
     "file-ext|x=s"       => \$file_ext,
     "skip-irsend|I"      => \$skip_irsend,
+    "queue_comm_flag|q"  => \$queue_comm_flag,
     "help|H"             => sub { pod2usage(-verbose=>1) },
     "h"                  => sub { pod2usage() },
     "background|f"       => \$become_daemon,
@@ -255,14 +256,20 @@ $description = $description . "\n" . $file_ext;
     # Now let's flag the commercials
     # It doesn't look like "real-time flagging" can be done.
     # This process takes longer than normal with the files created by the HDPVR.  This is something that should be figgured out at some point.
-    systemx("mythcommflag","-f","$output_path/$channel\_$commflag_name.$file_ext");
 
-    logmsg(DEBUG, "output_basename:  $output_basename");
-    logmsg(DEBUG, "output_path:      $output_path");
-    logmsg(DEBUG, "mysterious blarg: $output_path/$channel\_$commflag_name.$file_ext");
+	if( $queue_comm_flag ) {
+
+		systemx("mythcommflag","-f","$output_path/$channel\_$commflag_name.$file_ext");
+
+		logmsg(DEBUG, "output_basename: $output_basename");
+		logmsg(DEBUG, "output_path: $output_path");
+		logmsg(DEBUG, "file name: $output_path/$channel\_$commflag_name.$file_ext");
+	}
 }
+#print("$output_path/$channel\_$commflag_name.$file_ext\n");
 
 # some database cleanup only if there are files that exist without entries or entries that exist without files
+# comment/uncomment as needed, probably can be run by hand once in a while (as needed)
 #systemx("myth.find_orphans.pl", "--dodbdelete", "--dodelete", "--pass", $mysql_password);
 
 use Carp;
@@ -356,24 +363,25 @@ with any hardware (/dev/video*) type device that dumps a video/audio stream.
     -h help
     --help (-H) full help
 
-    --buffer-time  (-b) buffer/recovery time
-    --channel      (-c) channel
-    --description  (-d) show description
-    --background   (-f) fork/daemonize
-    --group        (-g) group
-    --lockfile     (-L) lockfile
-    --logfile      (-l) logfile (no logging unless specified)
-    --loglevel          0-3 - default: 2
-    --myth-import  (-m) mythtv mysql import option (requires -p)
-    --name         (-n) show name
-    --output-path  (-o) output path
-    --mysql-passwd (-p) mysql password (may require -o and/or -m)
-    --remote       (-r) remote device
-    --subtitle     (-s) subtitle description
-    --show-length  (-t) length in minutes (default: 30 minutes)
-    --video-device (-v) video device (default: /dev/video0)
-    --file-ext     (-x) file extension (default: mp4), alters ffmpeg behavior
-    --skip-irsend  (-I) skip irsend commands
+    --buffer-time     (-b) buffer/recovery time
+    --channel         (-c) channel
+    --description     (-d) show description
+    --background      (-f) fork/daemonize
+    --group           (-g) group
+    --lockfile        (-L) lockfile
+    --logfile         (-l) logfile (no logging unless specified)
+    --loglevel             0-3 - default: 2
+    --myth-import     (-m) mythtv mysql import option (requires -p)
+    --name            (-n) show name
+    --output-path     (-o) output path
+    --mysql-passwd    (-p) mysql password (may require -o and/or -m)
+    --queue_comm_flag (-q) queue commercial flagging
+    --remote          (-r) remote device
+    --subtitle        (-s) subtitle description
+    --show-length     (-t) length in minutes (default: 30 minutes)
+    --video-device    (-v) video device (default: /dev/video0)
+    --file-ext        (-x) file extension (default: mp4), alters ffmpeg behavior
+    --skip-irsend     (-I) skip irsend commands
 
 =head1 OPTIONS
 
@@ -446,6 +454,12 @@ mysql password, default is blank.  If you supply a password, will attempt to
 import into MythTV mysql!  Found in Frontend -> Utilities/Setup->Setup->General
 You need supply -o, which needs to be the path to your MythTV recorded shows folder.
 You should use -m (1 or 2).  If -m switch is not used, (-m 1) is assumed.
+
+=item B<-q> B<--locate_commercials>
+
+locate (i.e. flag) commercials
+This is a switch only, no value required after -q
+Default is to not flag (i.e. without switch).
 
 =item B<-r> B<--remote>
 
