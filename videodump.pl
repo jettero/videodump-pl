@@ -18,7 +18,7 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.69"; 
+our $VERSION = "1.69";
 
 my $lockfile       = "/tmp/.vd-pl.lock";
 my $channel        = "";
@@ -38,7 +38,7 @@ my $myth_import;
 my $skip_irsend;
 my $become_daemon;
 my $logfile_fh;
-my $queue_comm_flag;
+my $queue_comm_flag="n";
 
 my @original_arguments = @ARGV;
 
@@ -258,15 +258,17 @@ $description = $description . "\n" . $file_ext;
     # It doesn't look like "real-time flagging" can be done.
     # This process takes longer than normal with the files created by the HDPVR.  This is something that should be figgured out at some point.
 
+	unless ( $queue_comm_flag eq "n" ) {
+		logmsg(DEBUG, "commercial flagging: $output_path/$channel\_$commflag_name.$file_ext");
 
-	if ( $queue_comm_flag ) {
-		#systemx("mythcommflag","-f","$output_path/$channel\_$commflag_name.$file_ext");
+		systemx("mythcommflag","-f","$output_path/$channel\_$commflag_name.$file_ext");
 
 		logmsg(DEBUG, "output_basename: $output_basename");
 		logmsg(DEBUG, "output_path: $output_path");
 		logmsg(DEBUG, "file name: $output_path/$channel\_$commflag_name.$file_ext");
 	}
 }
+
 #print("$output_path/$channel\_$commflag_name.$file_ext\n");
 
 # some database cleanup only if there are files that exist without entries or entries that exist without files
