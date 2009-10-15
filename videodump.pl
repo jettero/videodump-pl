@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 # videodump for Hauppauge HD PVR 1212 by David & Paul
+# for use with MythTV (tested only with MythBuntu)
 # see http://github.com/jettero/videodump-pl/ for further details.
 
 use strict;
@@ -18,7 +19,7 @@ use Cwd;
 use Time::HiRes qw(sleep);
 use Pod::Usage;
 
-our $VERSION = "1.69";
+our $VERSION = "1.70"; # 10/15/09
 
 my $lockfile       = "/tmp/.vd-pl.lock";
 my $channel        = "";
@@ -30,7 +31,7 @@ my $remote         = "dish";
 my $subtitle       = "recorded by HD PVR videodump";
 my $show_length    = 1800;# in seconds...1800 seconds = 30 minutes by default
 my $buffer_time    = 7; # seconds, gives time for unit to get ready for a subsequent recording...i.e. 1800 seconds -7 seconds
-my $video_device   = '/dev/video0';
+my $video_device   = '/dev/video0';	# default video device
 my $file_ext       = "mp4";# ts is also playable by the internal mythtv player
 my $loglevel       = INFO;
 my $mysql_password; #xfPbTC5xgx
@@ -180,7 +181,7 @@ unless( $skip_irsend ) {
 #capture native AVS format h264 AAC
 ffmpegx(
 
-    "-y",                                     # it's ok to overwrite the output file
+    "-y",                                     # forces an overwrite of the output file
     "-i"      => $video_device,               # the input device
     "-vcodec" => "copy",                      # copy the video codec without transcoding, probably asking to much to call a specific encoder for real time capture
     "-acodec" => "copy",                      # if using HDPVR stereo RCA (hardware defalt to AAC) this can be uncommented, if using optical SPDIF (hardware default to AC3) leave commented and no mp4 otherwise will give issues
